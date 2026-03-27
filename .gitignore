@@ -1,0 +1,4 @@
+# D:\React\TCC\.gitignore
+node_modules/
+.env
+dist/

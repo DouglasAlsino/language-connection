@@ -1,0 +1,86 @@
+/* Container principal do header
+   position: fixed faz ele ficar sempre visível no topo
+   mesmo quando o usuário rola a página para baixo
+   z-index: 100 garante que fica na frente de outros elementos */
+.lc-header {
+  width: 100%;
+  height: 72px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* sombra suave embaixo */
+  display: flex;                               /* alinha os filhos em linha */
+  align-items: center;                         /* centraliza verticalmente */
+  justify-content: space-between;              /* logo, nav e usuário nas extremidades */
+  padding: 0 48px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+/* Logo "Language Connection" — a palavra principal em roxo */
+.lc-header__logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #4f46e5;         /* roxo principal da plataforma */
+  letter-spacing: -0.5px;
+}
+
+/* Palavra "Connection" — em azul ciano para criar contraste com o roxo */
+.lc-header__logo span {
+  color: #06b6d4;
+}
+
+/* Grupo dos links de navegação — distribuídos horizontalmente */
+.lc-header__nav {
+  display: flex;
+  gap: 32px; /* espaçamento entre os links */
+}
+
+/* Estilo padrão de cada link de navegação */
+.lc-header__nav a {
+  text-decoration: none;  /* remove o sublinhado padrão dos links */
+  font-size: 15px;
+  font-weight: 500;
+  color: #64748b;         /* cinza médio quando inativo */
+  transition: color 0.2s; /* animação suave ao mudar de cor */
+}
+
+/* Estilo do link quando está na página atual (classe "active")
+   ou quando o mouse passa por cima (hover) */
+.lc-header__nav a.active,
+.lc-header__nav a:hover {
+  color: #4f46e5; /* muda para roxo para indicar seleção */
+}
+
+/* Container do usuário logado (avatar + nome) */
+.lc-header__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none; /* remove sublinhado do Link */
+  color: inherit;        /* mantém a cor original */
+  cursor: pointer; /* indica que é clicável (futuro: abrir menu) */
+}
+
+/* Avatar circular com gradiente roxo → azul
+   Mostra a inicial do nome do usuário */
+.lc-header__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;                                    /* deixa circular */
+  background: linear-gradient(135deg, #4f46e5, #06b6d4); /* gradiente da marca */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Nome do usuário ao lado do avatar */
+.lc-header__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+

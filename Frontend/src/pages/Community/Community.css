@@ -1,0 +1,424 @@
+/* Página principal da comunidade
+   Três colunas: sidebar esquerda, feed central, painel direito
+   padding-top compensa a Navbar fixa de 72px */
+.lc-community-page {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 280px;
+  gap: 20px;
+  padding: 88px 32px 32px; /* um pouco mais de padding lateral */
+  /* remove o max-width e margin se quiser full width */
+  /* max-width: 1280px;
+     margin: 0 auto; */
+  min-height: 100vh;
+  background: #f4f6f9;
+}
+
+/* COLUNA ESQUERDA — filtros e grupos */
+.lc-community-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Fica fixa enquanto o feed scrolla */
+  position: sticky;
+  top: 88px;
+  align-self: start;
+}
+
+/* COLUNA CENTRAL — feed de posts */
+.lc-community-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Título principal do feed */
+.lc-feed-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+/* COLUNA DIREITA — sugestões e destaques */
+.lc-community-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 88px;
+  align-self: start;
+}
+
+/* Card reutilizável usado em todas as três colunas */
+.lc-comm-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+}
+
+.lc-comm-card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.lc-comm-card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+/* Grupo de chips de filtro/idioma */
+.lc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Chip individual de seleção */
+.lc-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #4b5563;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+/* Chip selecionado — cor da marca */
+.lc-chip.active,
+.lc-chip:hover {
+  background: #eef2ff;
+  border-color: #4f46e5;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+/* Botão tracejado de "criar grupo" */
+.lc-btn-outline-dashed {
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px;
+  border-radius: 999px;
+  border: 1.5px dashed #94a3b8;
+  background: transparent;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lc-btn-outline-dashed:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+/* Card de criação de novo post */
+.lc-create-post {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+}
+
+/* Avatar redondo do autor — usado tanto no create-post quanto nos posts */
+.lc-post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+/* Avatar específico do usuário logado */
+.lc-avatar-me {
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+}
+
+/* Área principal de criação de post */
+.lc-create-post-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Textarea do novo post — sem borda, expande conforme o conteúdo */
+.lc-post-textarea {
+  width: 100%;
+  min-height: 64px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #0f172a;
+  resize: vertical;
+  font-family: inherit;
+  background: transparent;
+}
+
+.lc-post-textarea::placeholder { color: #9ca3af; }
+
+/* Rodapé do create post: select + botão publicar */
+.lc-create-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 8px;
+}
+
+/* Select de idioma do post */
+.lc-select-lang {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #4b5563;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+/* Botão primário — reutilizado em toda a plataforma */
+.lc-btn-primary {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.lc-btn-publish {
+  width: auto;
+}
+
+.lc-btn-primary:hover { background: #4338ca; }
+
+/* Card de cada post do feed */
+.lc-post-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  transition: box-shadow 0.2s;
+}
+
+.lc-post-card:hover {
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.08);
+}
+
+/* Corpo do post (tudo exceto o avatar) */
+.lc-post-body { flex: 1; }
+
+/* Cabeçalho do post — autor, tempo e tag lado a lado */
+.lc-post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.lc-post-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.lc-post-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Tag de idioma do post — ex: "#Inglês" */
+.lc-post-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+/* Texto principal do post */
+.lc-post-text {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+/* Rodapé do post — likes e comentários */
+.lc-post-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: #9ca3af;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 8px;
+}
+
+/* Cada ação clicável do rodapé */
+.lc-post-action {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.lc-post-action:hover { color: #4f46e5; }
+
+/* Área de input de comentário — aparece abaixo do post */
+.lc-comment-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* Avatar menor para o campo de comentário */
+.lc-comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Input de texto do comentário */
+.lc-comment-input input {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #0f172a;
+  background: #f9fafb;
+}
+
+.lc-comment-input input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+}
+
+.lc-comment-input input::placeholder { color: #9ca3af; }
+
+/* Botão de envio do comentário */
+.lc-comment-input button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lc-comment-input button:hover { background: #4f46e5; color: #fff; }
+
+/* Mini card de usuário sugerido (coluna direita) */
+.lc-mini-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* Avatar pequeno do usuário sugerido */
+.lc-mini-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Info do usuário sugerido — nome e idiomas */
+.lc-mini-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.lc-mini-info strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.lc-mini-info span { color: #6b7280; }
+
+/* Link "Ver todos" da sugestão */
+.lc-side-link {
+  font-size: 12px;
+  color: #4f46e5;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+/* Item de tendência (em destaque) */
+.lc-trend-item {
+  font-size: 12px;
+  color: #4b5563;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.lc-trend-item span {
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+/* Estado vazio quando nenhum post existe no filtro */
+.lc-empty-state {
+  text-align: center;
+  padding: 48px 0;
+  color: #94a3b8;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.lc-empty-state span {
+  color: #4f46e5;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-top: 8px;
+  display: inline-block;
+}

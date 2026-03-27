@@ -1,0 +1,282 @@
+/* Compensa a Navbar fixa — sem isso o conteúdo ficaria atrás do header */
+.lc-users-page {
+  display: flex;
+  padding-top: 72px;
+  min-height: 100vh;
+  background: #f4f6f9;
+}
+
+/* Sidebar fixa de filtros */
+.lc-users-sidebar {
+  width: 280px;
+  min-height: calc(100vh - 72px);
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  padding: 28px 20px;
+  position: fixed;
+  top: 72px;
+  top: 72px;
+  left: 0;
+}
+
+.lc-users-sidebar h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+/* Grupo de filtro: label + select */
+.lc-filter-group {
+  margin-bottom: 16px;
+}
+
+.lc-filter-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.lc-filter-group select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #334155;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.lc-filter-group select:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+/* Linha de checkbox */
+.lc-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.lc-checkbox-group input {
+  accent-color: #4f46e5;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.lc-checkbox-group label {
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+}
+
+/* Botão primário da sidebar */
+.lc-btn-primary {
+  width: 100%;
+  padding: 11px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+
+.lc-btn-primary:hover { background: #4338ca; }
+
+/* Link de "limpar filtros" */
+.lc-btn-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: #94a3b8;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Área principal — empurra para a direita da sidebar */
+.lc-users-content {
+  margin-left: 295px;
+  flex: 1;
+  padding: 28px 32px;
+}
+
+.lc-users-header {
+  margin-bottom: 20px;
+}
+
+.lc-users-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.lc-users-header h1 span {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Grid responsivo de cards */
+.lc-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 14px;
+}
+
+/* Card individual de usuário */
+.lc-user-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.lc-user-card:hover {
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Avatar circular do usuário */
+.lc-user-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.lc-user-info { flex: 1; }
+
+.lc-user-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 3px;
+}
+
+.lc-lang-row {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.lc-lang-row strong { color: #475569; }
+
+/* Tags de interesses */
+.lc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.lc-tag {
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* Ações — lado direito do card */
+.lc-user-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Status online/offline */
+.lc-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lc-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.lc-status.online .lc-status-dot { background: #22c55e; }
+.lc-status.online span { color: #22c55e; }
+.lc-status.offline .lc-status-dot { background: #cbd5e1; }
+.lc-status.offline span { color: #94a3b8; }
+
+/* Botão secundário "Ver perfil" */
+.lc-btn-secondary {
+  padding: 6px 12px;
+  background: transparent;
+  color: #4f46e5;
+  border: 1.5px solid #4f46e5;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lc-btn-secondary:hover { background: #eef2ff; }
+
+/* Botão "Conectar" — muda visual quando conectado */
+.lc-btn-connect {
+  padding: 6px 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lc-btn-connect:hover { background: #4338ca; }
+
+/* Estado "já conectado" — visual diferente para feedback */
+.lc-btn-connect.conectado {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Estado vazio quando nenhum usuário bate nos filtros */
+.lc-empty-state {
+  text-align: center;
+  padding: 48px 0;
+  color: #94a3b8;
+}
+
+.lc-empty-state span {
+  color: #4f46e5;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-top: 8px;
+  display: inline-block;
+}

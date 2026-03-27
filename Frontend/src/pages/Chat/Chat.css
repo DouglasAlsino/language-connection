@@ -1,0 +1,374 @@
+/* Layout de três colunas que preenche a tela toda */
+.lc-chat-page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 260px;
+  height: calc(100vh - 72px); /* em vez de height: 100vh */
+  padding-top: 72px;          /* pode remover se usar calc, OU: */
+  /* opção alternativa:
+  height: 100vh;
+  padding-top: 72px;
+  */
+  background: #f4f6f9;
+}
+
+/* COLUNA ESQUERDA */
+.lc-chat-sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lc-chat-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.lc-chat-sidebar-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.lc-chat-search {
+  width: 100%;
+  padding: 7px;
+  padding-left: 0px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.lc-chat-search:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+/* Lista de conversas com scroll */
+.lc-conversations {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Item de conversa individual */
+.lc-conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lc-conversation-item:hover { background: #f1f5f9; }
+
+/* Conversa atualmente selecionada */
+.lc-conversation-item.active { background: #eef2ff; }
+
+/* Avatar das conversas */
+.lc-conv-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.lc-conv-info { flex: 1; min-width: 0; }
+
+.lc-conv-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+/* Última mensagem com truncamento de texto */
+.lc-conv-last {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lc-conv-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.lc-conv-time { font-size: 11px; color: #9ca3af; }
+
+/* Badge vermelho de mensagens não lidas */
+.lc-conv-badge {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+/* COLUNA CENTRAL — chat */
+.lc-chat-main {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  min-width: 0; /* evita empurrar o layout */
+}
+
+/* Header do chat ativo */
+.lc-chat-header {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.lc-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lc-chat-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lc-chat-header-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.lc-chat-header-lang {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.lc-chat-header-lang strong { color: #4f46e5; }
+
+.lc-chat-header-status {
+  font-size: 12px;
+  font-weight: 500;
+  color: #22c55e;
+}
+
+/* Área de mensagens com scroll */
+.lc-chat-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Separador de data (ex: "Hoje", "Ontem") */
+.lc-date-divider {
+  text-align: center;
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 4px 0 8px;
+  position: relative;
+}
+
+.lc-date-divider::before,
+.lc-date-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.lc-date-divider::before { left: 0; }
+.lc-date-divider::after { right: 0; }
+
+/* Linha de mensagem — alinha à esquerda ou direita */
+.lc-message-row {
+  display: flex;
+  max-width: 70%;
+}
+
+/* Mensagens do usuário logado ficam à direita */
+.lc-message-row.me {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+/* Balão de mensagem */
+.lc-message-bubble {
+  border-radius: 18px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border-bottom-left-radius: 4px; /* "bico" do balão */
+}
+
+/* Balão do usuário logado — roxo */
+.lc-message-bubble.me {
+  background: #4f46e5;
+  color: #ffffff;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Horário dentro do balão */
+.lc-message-time {
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: right;
+  margin-top: 3px;
+}
+
+.lc-message-time.me { color: rgba(226,232,240,0.8); }
+
+/* Área de input — rodapé do chat */
+.lc-chat-input-area {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0; /* garante que o rodapé não some em telas menores */
+}
+
+/* Botão de ícone (anexar) */
+.lc-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #eef2ff;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Input de texto da mensagem */
+.lc-chat-input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  background: #f9fafb;
+}
+
+.lc-chat-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+}
+
+/* Botão de enviar */
+.lc-send-btn {
+  padding: 0 16px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* COLUNA DIREITA — painel do contato */
+.lc-chat-panel {
+  background: #f9fafb;
+  padding: 20px 16px;
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lc-panel-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  text-align: center;
+}
+
+.lc-panel-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.lc-panel-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.lc-panel-lang {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.lc-btn-outline {
+  width: 100%;
+  padding: 8px;
+  border-radius: 999px;
+  border: 1.5px solid #4f46e5;
+  background: transparent;
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.lc-favorite-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  justify-content: center;
+}
+
+.lc-favorite-toggle input { accent-color: #f59e0b; }
