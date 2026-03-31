@@ -27,6 +27,12 @@ app.use(express.json());
 const authRoutes = require("./src/routes/authRoutes");
 app.use("/auth", authRoutes);
 
+// Importa e registra as rotas de usuários
+// Todas as rotas do arquivo usuarioRoutes.js vão ter prefixo /usuarios
+// ex: GET /usuarios
+const usuariosRoutes = require("./src/routes/usuariosRoutes");
+app.use("/usuarios", usuariosRoutes);
+
 // Rota de teste para verificar se o servidor está rodando
 // Acesse http://localhost:3000/health no navegador
 app.get("/health", (req, res) => {

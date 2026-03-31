@@ -1,21 +1,32 @@
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
-import { Link, useLocation } from "react-router-dom";
 
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Verifica se a rota atual começa com o caminho informado
-  const isActive = (path) => location.pathname.startsWith(path);
+  const usuarioSalvo = localStorage.getItem("usuario");
+  const usuario = usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
+
+  const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    navigate("/login");
+  };
 
   return (
     <header className="lc-header">
+      {/* ESQUERDA: logo */}
       <div className="lc-header__logo">
         Language <span>Connection</span>
       </div>
 
+      {/* CENTRO: links */}
       <nav className="lc-header__nav">
-        {/* Rotas em minúsculo para padronizar com o App.jsx */}
-        <Link to="/home" className={isActive("/home") ? "active" : ""}>
+        <Link to="/users" className={isActive("/users") ? "active" : ""}>
           Usuários
         </Link>
         <Link to="/community" className={isActive("/community") ? "active" : ""}>
@@ -26,11 +37,18 @@ function Navbar() {
         </Link>
       </nav>
 
-      {/* Avatar leva para o perfil do usuário logado */}
-      <Link to="/profile" className="lc-header__user">
-        <div className="lc-header__avatar">D</div>
-        <span className="lc-header__name">Douglas</span>
-      </Link>
+      {/* DIREITA: avatar + botão sair no mesmo container */}
+      <div className="lc-header__user">
+        <Link to="/profile" className="lc-header__profile-link">
+          <div className="lc-header__avatar">
+            {usuario?.nome?.charAt(0).toUpperCase() || "U"}
+          </div>
+        </Link>
+
+        <button className="lc-header__logout" onClick={handleLogout}>
+          Sair
+        </button>
+      </div>
     </header>
   );
 }

@@ -1,0 +1,33 @@
+const express = require("express");
+const router = express.Router();
+
+// Importa o middleware de autenticação
+// Caminho: de src/routes até src/middleware/auth.js
+const authMiddleware = require("../middleware/auth");
+
+// Importa a conexão com o banco de dados
+// Ajuste o caminho conforme onde está o seu db.js
+const db = require("../config/db");
+
+// GET /usuarios — retorna todos os usuários cadastrados
+// authMiddleware verifica o token antes de deixar passar
+router.get("/", authMiddleware, async (req, res) => {
+  try {
+    const idUsuarioLogado = req.usuario.id;
+    
+    const [usuarios] = await db.query(
+      `SELECT id, nome, sobrenome, idioma_nativo, idiomas_aprender, nivel, bio
+       FROM usuarios
+       WHERE id != ?
+       ORDER BY criado_em DESC`,
+       [idUsuarioLogado]
+    );
+
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+});
+
+module.exports = router;

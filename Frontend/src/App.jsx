@@ -20,11 +20,13 @@ import Navbar from "./components/Navbar/Navbar";
 // Importa todas as páginas com os caminhos corretos
 // conforme a estrutura real do projeto
 import Login from "./pages/Login/Login";
-import Register from "./pages/Register/Register";   // era Cadastro
+import Register from "./pages/Register/Register";
 import Users from "./pages/Users/Users";
 import Chat from "./pages/Chat/Chat";
-import Community from "./pages/Community/Community"; // era Comunidade
-import Profile from "./pages/Profile/Profile";       // era Perfil
+import Community from "./pages/Community/Community";
+import Profile from "./pages/Profile/Profile";
+
+import RequireAuth from "./components/RequireAuth";
 
 function App() {
   return (
@@ -37,7 +39,6 @@ function App() {
 function Content() {
   const location = useLocation();
 
-  // Navbar não aparece nas telas de Login e Register
   const showNavbar =
     location.pathname !== "/login" &&
     location.pathname !== "/register";
@@ -46,15 +47,70 @@ function Content() {
     <div>
       {showNavbar && <Navbar />}
       <Routes>
-        {/* Redireciona a raiz para login */}
-        <Route path="*" element={<Navigate to="/Login" />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Register" element={<Register />} />
-        <Route path="/Users" element={<Users />} />
-        <Route path="Chat" element={<Chat />} />
-        <Route path="/Community" element={<Community />} />
-        <Route path="/Profile" element={<Profile />} />
-        <Route path="/Profile/:id" element={<Profile />} />
+        {/* rotas públicas */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* rotas protegidas */}
+        <Route
+          path="/users"
+          element={
+            <RequireAuth>
+              <Users />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <RequireAuth>
+              <Chat />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <RequireAuth>
+              <Community />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <RequireAuth>
+              <Users />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/Register"
+          element={
+            <RequireAuth>
+              <Register />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile/:id"
+          element={
+            <RequireAuth>
+              <Profile />
+            </RequireAuth>
+          }
+        />
+
+        {/* qualquer outra rota manda para login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   );

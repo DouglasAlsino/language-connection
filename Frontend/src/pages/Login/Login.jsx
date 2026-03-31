@@ -184,7 +184,7 @@ function Login() {
 
               <p className="lc-signup-link">
                 Não tem conta?{" "}
-                <Link to="/Cadastro">Cadastre-se grátis</Link>
+                <Link to="/Register">Cadastre-se grátis</Link>
               </p>
 
             </form>
