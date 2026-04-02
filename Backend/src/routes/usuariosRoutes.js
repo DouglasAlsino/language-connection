@@ -30,4 +30,27 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
+// Busca o perfil de um usuário específico pelo id
+router.get("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT id, nome, sobrenome, idioma_nativo, idiomas_aprender, nivel, bio
+       FROM usuarios
+       WHERE id = ?`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ mensagem: "Usuário não encontrado." });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Erro ao buscar perfil:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+});
+
 module.exports = router;

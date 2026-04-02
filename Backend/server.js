@@ -33,6 +33,9 @@ app.use("/auth", authRoutes);
 const usuariosRoutes = require("./src/routes/usuariosRoutes");
 app.use("/usuarios", usuariosRoutes);
 
+const conexoesRoutes = require("./src/routes/conexoesRoutes");
+app.use("/conexoes", conexoesRoutes);
+
 // Rota de teste para verificar se o servidor está rodando
 // Acesse http://localhost:3000/health no navegador
 app.get("/health", (req, res) => {

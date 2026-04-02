@@ -1,6 +1,8 @@
 import "./Users.css";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
 
 // Gera uma cor de avatar baseada no id do usuário
 // Assim cada pessoa tem sempre a mesma cor, sem precisar salvar no banco
@@ -196,17 +198,80 @@ function Users() {
 }
 
 function UserCard({ usuario }) {
-  const [conectado, setConectado] = useState(false);
+  const navigate = useNavigate();
+  const [statusConexao, setStatusConexao] = useState("nenhuma"); // "nenhuma" | "pendente" | "aceita"
+  const [enviando, setEnviando] = useState(false);
 
-  // Pega a inicial do nome para o avatar
+  const token = localStorage.getItem("token");
   const inicial = usuario.nome?.charAt(0).toUpperCase() || "?";
   const cor = getCorPorId(usuario.id);
 
-  // idiomas_aprender vem como string "Inglês,Espanhol"
-  // split transforma em array ["Inglês", "Espanhol"] para exibir como tags
   const idiomasAprender = usuario.idiomas_aprender
     ? usuario.idiomas_aprender.split(",").map((i) => i.trim())
     : [];
+
+  // Busca o status real da conexão ao montar o card
+  useEffect(() => {
+    const verificarStatus = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:3000/conexoes/status/${usuario.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setStatusConexao(res.data.status); // "nenhuma", "pendente" ou "aceita"
+      } catch (error) {
+        console.error("Erro ao verificar status:", error);
+      }
+    };
+
+    verificarStatus();
+  }, [usuario.id]);
+
+  const enviarSolicitacao = async () => {
+    try {
+      setEnviando(true);
+      await axios.post(
+        "http://localhost:3000/conexoes",
+        { receptor_id: usuario.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStatusConexao("pendente");
+    } catch (error) {
+      console.error("Erro ao enviar solicitação:", error);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  // Decide o que mostrar no botão de conexão
+  const renderBotaoConexao = () => {
+    if (statusConexao === "aceita") {
+      return (
+        <button
+          className="lc-btn-connect mensagem"
+          onClick={() => navigate("/chat")}
+         >
+          Enviar mensagem
+         </button>
+       );
+    }
+    if (statusConexao === "pendente") {
+      return (
+        <button className="lc-btn-connect pendente" disabled>
+          Solicitação pendente
+        </button>
+      );
+    }
+    return (
+      <button
+        className="lc-btn-connect"
+        onClick={enviarSolicitacao}
+        disabled={enviando}
+      >
+        {enviando ? "Enviando..." : "Conectar"}
+      </button>
+    );
+  };
 
   return (
     <div className="lc-user-card">
@@ -226,19 +291,17 @@ function UserCard({ usuario }) {
             : "Não informado"}{" "}
           {usuario.nivel && `(${usuario.nivel})`}
         </p>
-        {usuario.bio && (
-          <p className="lc-lang-row">{usuario.bio}</p>
-        )}
+        {usuario.bio && <p className="lc-lang-row">{usuario.bio}</p>}
       </div>
 
       <div className="lc-user-actions">
-        <button className="lc-btn-secondary">Ver perfil</button>
         <button
-          className={`lc-btn-connect ${conectado ? "conectado" : ""}`}
-          onClick={() => setConectado(!conectado)}
+          className="lc-btn-secondary"
+          onClick={() => navigate(`/usuarios/${usuario.id}`)}
         >
-          {conectado ? "Conectado ✓" : "Conectar"}
+          Ver perfil
         </button>
+        {renderBotaoConexao()}
       </div>
     </div>
   );

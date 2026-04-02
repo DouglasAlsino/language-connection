@@ -25,6 +25,7 @@ import Users from "./pages/Users/Users";
 import Chat from "./pages/Chat/Chat";
 import Community from "./pages/Community/Community";
 import Profile from "./pages/Profile/Profile";
+import PerfilUsuario from "./pages/PerfilUsuario/PerfilUsuario";
 
 import RequireAuth from "./components/RequireAuth";
 
@@ -108,6 +109,14 @@ function Content() {
             </RequireAuth>
           }
         />
+        <Route 
+          path="/usuarios/:id"
+           element={
+           <RequireAuth>
+            <PerfilUsuario />
+            </RequireAuth>
+            } 
+          />
 
         {/* qualquer outra rota manda para login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
