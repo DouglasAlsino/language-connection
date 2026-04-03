@@ -53,8 +53,11 @@ function Navbar() {
 
   // Busca ao montar e a cada 30 segundos
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return; // não busca nada se não estiver logado
+
     buscarPendentes();
-    const intervalo = setInterval(buscarPendentes, 30000);
+    const intervalo = setInterval(buscarPendentes, 15000);
     return () => clearInterval(intervalo);
   }, []);
 
@@ -72,6 +75,7 @@ function Navbar() {
   return (
     <header className="lc-header">
       {/* ESQUERDA: logo */}
+      <img src="IMG/logo.png" alt="Logo" width="70" height="70"></img>
       <div className="lc-header__logo">
         Language <span>Connection</span>
       </div>

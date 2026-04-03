@@ -211,21 +211,28 @@ function UserCard({ usuario }) {
     : [];
 
   // Busca o status real da conexão ao montar o card
-  useEffect(() => {
-    const verificarStatus = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:3000/conexoes/status/${usuario.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setStatusConexao(res.data.status); // "nenhuma", "pendente" ou "aceita"
-      } catch (error) {
-        console.error("Erro ao verificar status:", error);
-      }
-    };
+ useEffect(() => {
+  const verificarStatus = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/conexoes/status/${usuario.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStatusConexao(res.data.status);
+    } catch (error) {
+      console.error("Erro ao verificar status:", error);
+    }
+  };
 
-    verificarStatus();
-  }, [usuario.id]);
+  // Roda imediatamente ao montar
+  verificarStatus();
+
+  // Continua verificando a cada 10 segundos
+  const intervalo = setInterval(verificarStatus, 100);
+
+  // Limpa o intervalo quando o card é desmontado
+  return () => clearInterval(intervalo);
+}, [usuario.id]);
 
   const enviarSolicitacao = async () => {
     try {

@@ -84,11 +84,12 @@ function Login() {
 
       {/* Header próprio do Login */}
       <header className="lc-login-header">
+        <img src="IMG/logo.png" alt="Logo" width="70" height="70"></img>
         <div className="lc-login-logo">
           Language <span>Connection</span>
         </div>
         <div className="lc-login-header-link">
-          Não tem conta? <Link to="/Cadastro">Cadastre-se grátis</Link>
+          Não tem conta? <Link to="/register">Cadastre-se grátis</Link>
         </div>
       </header>
 
@@ -184,7 +185,7 @@ function Login() {
 
               <p className="lc-signup-link">
                 Não tem conta?{" "}
-                <Link to="/Register">Cadastre-se grátis</Link>
+                <Link to="/register">Cadastre-se grátis</Link>
               </p>
 
             </form>

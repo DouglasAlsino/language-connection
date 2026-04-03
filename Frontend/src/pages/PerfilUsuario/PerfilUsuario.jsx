@@ -71,27 +71,54 @@ function PerfilUsuario() {
     }
   }
 
-  function renderizarBotao() {
-    if (statusConexao === "aceita") {
-      return (
-        <button className="lc-btn-message" onClick={() => navigate("/Chat")}>
+  const [desconectando, setDesconectando] = useState(false);
+
+async function desconectar() {
+  try {
+    setDesconectando(true);
+    await axios.delete(`http://localhost:3000/conexoes/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setStatusConexao("nenhuma");
+    // Atualiza a lista de conexões após desconectar
+    setConexoes((prev) => prev.filter((c) => c.id !== Number(id)));
+  } catch (error) {
+    console.error("Erro ao desconectar:", error);
+  } finally {
+    setDesconectando(false);
+  }
+}
+
+function renderizarBotao() {
+  if (statusConexao === "aceita") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <button className="lc-btn-message" onClick={() => navigate("/chat")}>
           Enviar mensagem
         </button>
-      );
-    }
-    if (statusConexao === "pendente") {
-      return (
-        <button className="lc-btn-pendente" disabled>
-          Solicitação pendente
+        <button
+          className="lc-btn-desconectar"
+          onClick={desconectar}
+          disabled={desconectando}
+        >
+          {desconectando ? "Removendo..." : "Desconectar"}
         </button>
-      );
-    }
+      </div>
+    );
+  }
+  if (statusConexao === "pendente") {
     return (
-      <button className="lc-btn-conectar" onClick={enviarSolicitacao}>
-        Conectar
+      <button className="lc-btn-pendente" disabled>
+        Solicitação pendente
       </button>
     );
   }
+  return (
+    <button className="lc-btn-conectar" onClick={enviarSolicitacao}>
+      Conectar
+    </button>
+  );
+}
 
   if (carregando) return <div className="lc-carregando">Carregando perfil...</div>;
   if (!perfil) return <div className="lc-carregando">Usuário não encontrado.</div>;

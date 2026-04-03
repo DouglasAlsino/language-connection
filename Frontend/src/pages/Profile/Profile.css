@@ -478,3 +478,35 @@
   border-radius: 999px;
   transition: width 0.6s ease; /* animação suave ao carregar */
 }
+.lc-btn-desconectar {
+  padding: 8px 16px;
+  background: transparent;
+  color: #ef4444;
+  border: 1.5px solid #ef4444;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lc-btn-desconectar:hover {
+  background: #fef2f2;
+}
+
+.lc-btn-desconectar-mini {
+  padding: 4px 10px;
+  background: transparent;
+  color: #ef4444;
+  border: 1.5px solid #ef4444;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.lc-btn-desconectar-mini:hover {
+  background: #fef2f2;
+}

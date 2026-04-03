@@ -1,228 +1,277 @@
 import "./Chat.css";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+import axios from "axios";
 
-// Lista simulada de conversas existentes
-// Futuramente virá de GET /conversas/:userId
-const CONVERSAS_MOCK = [
-  {
-    id: 1,
-    nome: "Ana Silva",
-    inicial: "A",
-    cor: "linear-gradient(135deg,#10B981,#3B82F6)",
-    ultimaMensagem: "Podemos praticar amanhã às 20h?",
-    hora: "14:32",
-    naoLidas: 2,
-    online: true,
-    idiomaNativo: "Português",
-    idiomaAprendendo: "Inglês",
-  },
-  {
-    id: 2,
-    nome: "James Williams",
-    inicial: "J",
-    cor: "linear-gradient(135deg,#F97316,#FACC15)",
-    ultimaMensagem: "Thanks for helping!",
-    hora: "Ontem",
-    naoLidas: 0,
-    online: true,
-    idiomaNativo: "Inglês",
-    idiomaAprendendo: "Português",
-  },
-  {
-    id: 3,
-    nome: "Maria Hernández",
-    inicial: "M",
-    cor: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-    ultimaMensagem: "Te paso la lista de series :)",
-    hora: "Seg",
-    naoLidas: 0,
-    online: false,
-    idiomaNativo: "Espanhol",
-    idiomaAprendendo: "Português",
-  },
-];
-
-// Mensagens simuladas da conversa com Ana — futuramente: GET /mensagens/:conversaId
-const MENSAGENS_MOCK = [
-  { id: 1, texto: "Oi, Douglas! Podemos focar em phrasal verbs hoje?", minha: false, hora: "14:29" },
-  { id: 2, texto: "Oi, Ana! Claro. Que tal começarmos com 'get up', 'wake up' e 'figure out'?", minha: true, hora: "14:30" },
-  { id: 3, texto: "Perfeito! Você pode me mandar alguns exemplos de frases?", minha: false, hora: "14:31" },
-  { id: 4, texto: "'I usually get up at 7 a.m.' e 'We need to figure out this problem'.", minha: true, hora: "14:32" },
-];
+// Cria o socket FORA do componente
+// Isso garante uma única instância durante toda a vida da aplicação
+// O StrictMode não consegue duplicar porque não está dentro do ciclo de render
+const socket = io("http://localhost:3000", {
+  autoConnect: false, // não conecta automaticamente, vamos controlar isso manualmente
+});
 
 function Chat() {
-  // Conversa atualmente selecionada (clicada na lista esquerda)
-  const [conversaAtiva, setConversaAtiva] = useState(CONVERSAS_MOCK[0]);
+  const navigate = useNavigate();
 
-  // Lista de mensagens da conversa ativa
-  const [mensagens, setMensagens] = useState(MENSAGENS_MOCK);
+  const token = localStorage.getItem("token");
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-  // Texto sendo digitado no input de mensagem
+  const fimMensagensRef = useRef(null);
+
+  const [conexoes, setConexoes] = useState([]);
+  const [conversaAtiva, setConversaAtiva] = useState(null);
+  const [mensagens, setMensagens] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState("");
+  const [carregandoMensagens, setCarregandoMensagens] = useState(false);
 
-  // Envia uma nova mensagem
-  const enviarMensagem = (e) => {
-    e.preventDefault();
+  // ─── Conecta o socket e registra os listeners ─────────────────────
+  useEffect(() => {
 
-    // Não envia se estiver vazio ou só com espaços
-    if (!novaMensagem.trim()) return;
+    // Conecta manualmente — controlamos quando isso acontece
+    socket.connect();
 
-    // Cria o objeto da nova mensagem
-    // Futuramente: await api.post("/mensagens", { conversaId, texto })
-    const mensagem = {
-      id: mensagens.length + 1,
-      texto: novaMensagem,
-      minha: true, // mensagem enviada pelo usuário logado
-      hora: new Date().toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    const aoConectar = () => {
+      socket.emit("entrar_sala", usuarioLogado.id);
     };
 
-    // Adiciona a mensagem à lista existente
-    setMensagens((prev) => [...prev, mensagem]);
+    const aoReceberMensagem = (mensagem) => {
+      setConversaAtiva((conversaAtualizada) => {
+        if (
+          conversaAtualizada &&
+          (mensagem.remetente_id === conversaAtualizada.id ||
+            mensagem.destinatario_id === conversaAtualizada.id)
+        ) {
+          setMensagens((prev) => {
+            // Proteção extra contra duplicatas:
+            // verifica se a mensagem já existe na lista pelo ID
+            // antes de adicionar
+            const jaExiste = prev.some((m) => m.id === mensagem.id);
+            if (jaExiste) return prev;
+            return [...prev, mensagem];
+          });
+        }
+        return conversaAtualizada;
+      });
+    };
 
-    // Limpa o campo de input
+    // Registra os listeners usando as funções nomeadas acima
+    // Funções nomeadas permitem remover o listener específico no cleanup
+    socket.on("connect", aoConectar);
+    socket.on("nova_mensagem", aoReceberMensagem);
+
+    // Cleanup: remove APENAS os listeners, não desconecta o socket
+    // porque o socket está fora do componente e pode ser reutilizado
+    return () => {
+      socket.off("connect", aoConectar);
+      socket.off("nova_mensagem", aoReceberMensagem);
+      socket.disconnect();
+    };
+  }, []);
+
+  // ─── Busca conexões aceitas ────────────────────────────────────────
+  useEffect(() => {
+    const buscarConexoes = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:3000/conexoes/aceitas/${usuarioLogado.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setConexoes(res.data);
+        if (res.data.length > 0) {
+          setConversaAtiva(res.data[0]);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar conexões:", error);
+      }
+    };
+
+    buscarConexoes();
+  }, []);
+
+  // ─── Busca histórico quando a conversa muda ───────────────────────
+  useEffect(() => {
+    if (!conversaAtiva) return;
+
+    const buscarMensagens = async () => {
+      try {
+        setCarregandoMensagens(true);
+        const res = await axios.get(
+          `http://localhost:3000/mensagens/${conversaAtiva.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setMensagens(res.data);
+      } catch (error) {
+        console.error("Erro ao buscar mensagens:", error);
+      } finally {
+        setCarregandoMensagens(false);
+      }
+    };
+
+    buscarMensagens();
+  }, [conversaAtiva?.id]);
+
+  // ─── Scroll automático ────────────────────────────────────────────
+  useEffect(() => {
+    fimMensagensRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensagens]);
+
+  // ─── Envia mensagem ───────────────────────────────────────────────
+  const enviarMensagem = (e) => {
+    e.preventDefault();
+    if (!novaMensagem.trim() || !conversaAtiva) return;
+
+    socket.emit("enviar_mensagem", {
+      remetente_id: usuarioLogado.id,
+      destinatario_id: conversaAtiva.id,
+      texto: novaMensagem.trim(),
+    });
+
     setNovaMensagem("");
+  };
+
+  const formatarHora = (data) => {
+    return new Date(data).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
     <div className="lc-chat-page">
 
-      {/* COLUNA ESQUERDA — lista de conversas */}
       <aside className="lc-chat-sidebar">
         <div className="lc-chat-sidebar-header">
           <h2>Mensagens</h2>
-          <input
-            className="lc-chat-search"
-            placeholder="Buscar conversa"
-          />
+          <input className="lc-chat-search" placeholder="Buscar conversa" />
         </div>
 
-        {/* Lista de conversas — cada item é clicável */}
         <div className="lc-conversations">
-          {CONVERSAS_MOCK.map((conversa) => (
-            <div
-              key={conversa.id}
-              // Marca a conversa ativa com classe diferente
-              className={`lc-conversation-item ${
-                conversaAtiva.id === conversa.id ? "active" : ""
-              }`}
-              onClick={() => setConversaAtiva(conversa)}
-            >
-              {/* Avatar da conversa */}
+          {conexoes.length === 0 ? (
+            <p style={{ color: "#94a3b8", textAlign: "center", padding: "32px 16px", fontSize: "14px" }}>
+              Você ainda não tem conexões. Conecte-se com alguém para começar a conversar!
+            </p>
+          ) : (
+            conexoes.map((conexao) => (
               <div
-                className="lc-conv-avatar"
-                style={{ background: conversa.cor }}
+                key={conexao.id}
+                className={`lc-conversation-item ${conversaAtiva?.id === conexao.id ? "active" : ""}`}
+                onClick={() => setConversaAtiva(conexao)}
               >
-                {conversa.inicial}
+                <div
+                  className="lc-conv-avatar"
+                  style={{ background: "linear-gradient(135deg, #4f46e5, #06b6d4)" }}
+                >
+                  {conexao.nome?.charAt(0).toUpperCase()}
+                </div>
+                <div className="lc-conv-info">
+                  <div className="lc-conv-name">{conexao.nome} {conexao.sobrenome}</div>
+                  <div className="lc-conv-last">{conexao.idioma_nativo} → {conexao.idiomas_aprender}</div>
+                </div>
               </div>
-
-              {/* Nome e última mensagem */}
-              <div className="lc-conv-info">
-                <div className="lc-conv-name">{conversa.nome}</div>
-                <div className="lc-conv-last">{conversa.ultimaMensagem}</div>
-              </div>
-
-              {/* Hora e badge de não lidas */}
-              <div className="lc-conv-meta">
-                <span className="lc-conv-time">{conversa.hora}</span>
-                {conversa.naoLidas > 0 && (
-                  <span className="lc-conv-badge">{conversa.naoLidas}</span>
-                )}
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </aside>
 
-      {/* COLUNA CENTRAL — área de chat */}
       <main className="lc-chat-main">
-
-        {/* Header do chat — mostra info do contato ativo */}
-        <div className="lc-chat-header">
-          <div className="lc-chat-header-left">
-            <div
-              className="lc-conv-avatar"
-              style={{ background: conversaAtiva.cor }}
-            >
-              {conversaAtiva.inicial}
-            </div>
-            <div className="lc-chat-header-info">
-              <span className="lc-chat-header-name">{conversaAtiva.nome}</span>
-              <span className="lc-chat-header-lang">
-                Nativo em{" "}
-                <strong>{conversaAtiva.idiomaNativo}</strong> · Praticando{" "}
-                <strong>{conversaAtiva.idiomaAprendendo}</strong>
-              </span>
-            </div>
+        {!conversaAtiva ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
+            Selecione uma conversa para começar
           </div>
-          <span className="lc-chat-header-status">
-            {conversaAtiva.online ? "Online agora" : "Offline"}
-          </span>
-        </div>
-
-        {/* Área de mensagens — onde os balões aparecem */}
-        <div className="lc-chat-messages">
-          <div className="lc-date-divider">Hoje</div>
-
-          {/* Renderiza cada mensagem — alinha à esquerda ou direita */}
-          {mensagens.map((msg) => (
-            <div
-              key={msg.id}
-              className={`lc-message-row ${msg.minha ? "me" : ""}`}
-            >
-              <div className={`lc-message-bubble ${msg.minha ? "me" : "other"}`}>
-                {msg.texto}
-                {/* Horário dentro do balão */}
-                <div className={`lc-message-time ${msg.minha ? "me" : ""}`}>
-                  {msg.hora}
+        ) : (
+          <>
+            <div className="lc-chat-header">
+              <div className="lc-chat-header-left">
+                <div
+                  className="lc-conv-avatar"
+                  style={{ background: "linear-gradient(135deg, #4f46e5, #06b6d4)" }}
+                >
+                  {conversaAtiva.nome?.charAt(0).toUpperCase()}
+                </div>
+                <div className="lc-chat-header-info">
+                  <span
+                    className="lc-chat-header-name"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate(`/usuarios/${conversaAtiva.id}`)}
+                  >
+                    {conversaAtiva.nome} {conversaAtiva.sobrenome}
+                  </span>
+                  <span className="lc-chat-header-lang">
+                    Nativo em <strong>{conversaAtiva.idioma_nativo}</strong> · Praticando <strong>{conversaAtiva.idiomas_aprender}</strong>
+                  </span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Área de input — para digitar e enviar mensagem */}
-        <form className="lc-chat-input-area" onSubmit={enviarMensagem}>
-          <button type="button" className="lc-icon-btn" title="Anexar">
-            📎
-          </button>
-          <input
-            className="lc-chat-input"
-            placeholder="Escreva sua mensagem..."
-            value={novaMensagem}
-            // Atualiza o estado a cada tecla digitada
-            onChange={(e) => setNovaMensagem(e.target.value)}
-          />
-          <button type="submit" className="lc-send-btn">
-            Enviar ➤
-          </button>
-        </form>
+            <div className="lc-chat-messages">
+              <div className="lc-date-divider">Hoje</div>
+
+              {carregandoMensagens ? (
+                <p style={{ textAlign: "center", color: "#94a3b8", padding: "32px" }}>
+                  Carregando mensagens...
+                </p>
+              ) : mensagens.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#94a3b8", padding: "32px" }}>
+                  Nenhuma mensagem ainda. Diga olá! 👋
+                </p>
+              ) : (
+                mensagens.map((msg) => {
+                  const isMinha = msg.remetente_id === usuarioLogado.id;
+                  return (
+                    <div key={msg.id} className={`lc-message-row ${isMinha ? "me" : ""}`}>
+                      <div className={`lc-message-bubble ${isMinha ? "me" : "other"}`}>
+                        {msg.texto}
+                        <div className={`lc-message-time ${isMinha ? "me" : ""}`}>
+                          {formatarHora(msg.criado_em)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+
+              <div ref={fimMensagensRef} />
+            </div>
+
+            <form className="lc-chat-input-area" onSubmit={enviarMensagem}>
+              <input
+                className="lc-chat-input"
+                placeholder="Escreva sua mensagem..."
+                value={novaMensagem}
+                onChange={(e) => setNovaMensagem(e.target.value)}
+              />
+              <button type="submit" className="lc-send-btn">
+                Enviar ➤
+              </button>
+            </form>
+          </>
+        )}
       </main>
 
-      {/* COLUNA DIREITA — painel de informações do contato */}
       <aside className="lc-chat-panel">
-        <div className="lc-panel-card">
-          <div
-            className="lc-panel-avatar"
-            style={{ background: conversaAtiva.cor }}
-          >
-            {conversaAtiva.inicial}
+        {conversaAtiva && (
+          <div className="lc-panel-card">
+            <div
+              className="lc-panel-avatar"
+              style={{ background: "linear-gradient(135deg, #4f46e5, #06b6d4)" }}
+            >
+              {conversaAtiva.nome?.charAt(0).toUpperCase()}
+            </div>
+            <div className="lc-panel-name">{conversaAtiva.nome} {conversaAtiva.sobrenome}</div>
+            <div className="lc-panel-lang">
+              <strong>Nativo:</strong> {conversaAtiva.idioma_nativo}
+              <br />
+              <strong>Praticando:</strong> {conversaAtiva.idiomas_aprender}
+            </div>
+            <button
+              className="lc-btn-outline"
+              onClick={() => navigate(`/usuarios/${conversaAtiva.id}`)}
+            >
+              Ver perfil completo
+            </button>
           </div>
-          <div className="lc-panel-name">{conversaAtiva.nome}</div>
-          <div className="lc-panel-lang">
-            <strong>Nativo:</strong> {conversaAtiva.idiomaNativo}
-            <br />
-            <strong>Praticando:</strong> {conversaAtiva.idiomaAprendendo}
-          </div>
-          <button className="lc-btn-outline">Ver perfil completo</button>
-          {/* Toggle de favorito — futuramente salvo no backend */}
-          <label className="lc-favorite-toggle">
-            <input type="checkbox" />
-            Marcar como favorito
-          </label>
-        </div>
+        )}
       </aside>
 
     </div>
