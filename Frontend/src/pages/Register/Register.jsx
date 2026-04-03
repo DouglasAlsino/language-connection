@@ -121,11 +121,12 @@ function Cadastro() {
 
       {/* Header próprio do Cadastro */}
       <header className="lc-register-header">
+        <img src="IMG/logo.png" alt="Logo" width="70" height="70"></img>
         <div className="lc-register-logo">
           Language <span>Connection</span>
         </div>
         <div className="lc-register-header-link">
-          Já tem conta? <Link to="/Login">Entrar</Link>
+          Já tem conta? <Link to="/login">Entrar</Link>
         </div>
       </header>
 
@@ -311,7 +312,7 @@ function Cadastro() {
               </button>
 
               <p className="lc-login-link">
-                Já tem conta? <Link to="/Login">Entrar</Link>
+                Já tem conta? <Link to="/login">Entrar</Link>
               </p>
 
             </form>

@@ -128,4 +128,32 @@ router.get("/aceitas/:usuarioId", authMiddleware, async (req, res) => {
   }
 });
 
+// Remove uma conexão aceita entre o usuário logado e outro usuário
+router.delete("/:outroUsuarioId", authMiddleware, async (req, res) => {
+  try {
+    const meuId = req.usuario.id;
+    const outroId = req.params.outroUsuarioId;
+
+    const [result] = await db.query(
+      `DELETE FROM conexoes
+       WHERE status = 'aceita'
+         AND (
+           (solicitante_id = ? AND receptor_id = ?)
+           OR
+           (solicitante_id = ? AND receptor_id = ?)
+         )`,
+      [meuId, outroId, outroId, meuId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensagem: "Conexão não encontrada." });
+    }
+
+    res.json({ mensagem: "Conexão removida com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao remover conexão:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+});
+
 module.exports = router;
