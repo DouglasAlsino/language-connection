@@ -1,50 +1,10 @@
-// Importa o CSS específico desta tela
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import "./Community.css";
 
-// useState para controlar posts, novo post, filtros e comentários
-import { useState } from "react";
-
-// Dados simulados de posts — futuramente virão de GET /posts
-const POSTS_MOCK = [
-  {
-    id: 1,
-    autor: "Ana Silva",
-    inicial: "A",
-    cor: "linear-gradient(135deg,#10B981,#3B82F6)",
-    tempo: "há 2 horas",
-    idioma: "#Inglês",
-    texto:
-      "Hoje aprendi a diferença entre 'say' e 'tell'. Alguém tem dicas de exemplos práticos para memorizar melhor?",
-    likes: 12,
-    comentarios: 4,
-  },
-  {
-    id: 2,
-    autor: "James Williams",
-    inicial: "J",
-    cor: "linear-gradient(135deg,#F97316,#FACC15)",
-    tempo: "há 5 horas",
-    idioma: "#Português",
-    texto:
-      "Pessoal, qual a diferença entre 'saudade' e 'nostalgia' em português? Exemplos são bem-vindos!",
-    likes: 23,
-    comentarios: 8,
-  },
-  {
-    id: 3,
-    autor: "Yuki Tanaka",
-    inicial: "Y",
-    cor: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-    tempo: "há 1 dia",
-    idioma: "#Japonês",
-    texto:
-      "Alguém mais estuda japonês aqui? Estou tentando aprender hiragana e adoraria trocar dicas!",
-    likes: 9,
-    comentarios: 2,
-  },
-];
-
-// Sugestões de parceiros para o painel direito
+// Sugestões de parceiros para o painel direito (ainda mockadas, pois não temos API para isso)
 const SUGESTOES_MOCK = [
   {
     id: 1,
@@ -70,80 +30,118 @@ const SUGESTOES_MOCK = [
 ];
 
 function Community() {
-  // Lista de posts — inicia com dados mockados
-  // Futuramente: buscar de GET /posts
-  const [posts, setPosts] = useState(POSTS_MOCK);
-
-  // Texto digitado na área de criação de novo post
-  const [novoPost, setNovoPost] = useState("");
-
-  // Idioma selecionado para o novo post
-  const [idiomaPost, setIdiomaPost] = useState("Inglês");
-
-  // Filtro de idioma ativo na sidebar esquerda
+  const [posts, setPosts] = useState([]);
+  const [novoPostTitulo, setNovoPostTitulo] = useState("");
+  const [novoPostConteudo, setNovoPostConteudo] = useState("");
+  const [novoPostIdioma, setNovoPostIdioma] = useState("");
+  const [carregandoPosts, setCarregandoPosts] = useState(true);
+  const [erro, setErro] = useState("");
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
 
-  // Controla qual post está com a área de comentário aberta
-  // Guarda o ID do post — null = nenhum aberto
   const [comentarioAberto, setComentarioAberto] = useState(null);
-
-  // Texto digitado no campo de comentário
   const [textoComentario, setTextoComentario] = useState("");
+  const [likes, setLikes] = useState({});
 
-  // Controla os likes de cada post localmente
-  // Usa um objeto onde a chave é o ID do post
-  const [likes, setLikes] = useState(
-    POSTS_MOCK.reduce((acc, post) => ({ ...acc, [post.id]: post.likes }), {})
-  );
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const token = localStorage.getItem("token");
 
-  // Publica um novo post na comunidade
-  const publicarPost = (e) => {
-    e.preventDefault();
+  // ─── Função para buscar todos os posts ───────────────────────────
+  const buscarPosts = async () => {
+    // setCarregandoPosts(true); // Removido daqui para não mostrar "Carregando..." a cada 15s
+    setErro("");
+    try {
+      const response = await axios.get("http://localhost:3000/posts", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    // Não publica se o campo estiver vazio
-    if (!novoPost.trim()) return;
-
-    // Cria objeto do novo post com dados do usuário logado (por ora, fixo)
-    // Futuramente: await api.post("/posts", { texto: novoPost, idioma: idiomaPost })
-    const post = {
-      id: posts.length + 1,
-      autor: "Douglas",
-      inicial: "D",
-      cor: "linear-gradient(135deg,#4F46E5,#06B6D4)",
-      tempo: "agora mesmo",
-      idioma: `#${idiomaPost}`,
-      texto: novoPost,
-      likes: 0,
-      comentarios: 0,
-    };
-
-    // Adiciona o novo post no topo da lista
-    setPosts((prev) => [post, ...prev]);
-
-    // Inicializa o contador de likes do novo post
-    setLikes((prev) => ({ ...prev, [post.id]: 0 }));
-
-    // Limpa o campo de texto
-    setNovoPost("");
+      // Otimização: só atualiza o estado se os dados realmente mudaram
+      // Isso evita re-renderizações desnecessárias
+      if (JSON.stringify(response.data) !== JSON.stringify(posts)) {
+        setPosts(response.data);
+        // Re-inicializa os likes para incluir novos posts, se necessário
+        // Por enquanto, todos começam com 0 likes no frontend
+        const initialLikes = response.data.reduce((acc, post) => ({ ...acc, [post.id]: 0 }), {});
+        setLikes(initialLikes);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar posts:", err);
+      setErro("Não foi possível carregar os posts. Tente novamente mais tarde.");
+    } finally {
+      setCarregandoPosts(false); // Garante que o estado de carregamento seja desativado
+    }
   };
 
-  // Alterna o like de um post
-  // Se já curtiu, remove; se não curtiu, adiciona
-  const toggleLike = (postId) => {
-  setLikes((prev) => {
-    const atual = prev[postId] ?? 0;
-    const novo = atual === 0 ? 1 : 0; // 0 → 1 → 0 → 1 ...
-    return { ...prev, [postId]: novo };
-  });
-};
+  // ─── Busca posts ao montar e configura o intervalo de atualização ──
+  useEffect(() => {
+    // Chama a função de busca imediatamente ao montar o componente
+    buscarPosts();
 
-  // Abre ou fecha a área de comentário de um post
+    // Configura o intervalo para buscar posts a cada 15 segundos
+    const intervalo = setInterval(buscarPosts, 15000); // 15000 ms = 15 segundos
+
+    // Cleanup: Limpa o intervalo quando o componente desmonta
+    // Essencial para evitar memory leaks e múltiplas chamadas
+    return () => clearInterval(intervalo);
+  }, []); // Array de dependências vazio para rodar apenas uma vez ao montar
+
+  // ─── Função para criar um novo post ──────────────────────────────
+  const criarPost = async (e) => {
+    e.preventDefault();
+    setErro("");
+
+    if (!novoPostTitulo.trim() || !novoPostConteudo.trim() || !novoPostIdioma.trim()) {
+      setErro("Por favor, preencha todos os campos (Título, Conteúdo e Idioma).");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/posts",
+        {
+          titulo: novoPostTitulo,
+          conteudo: novoPostConteudo,
+          idioma: novoPostIdioma,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      // Adiciona o novo post ao início da lista (otimista)
+      // O backend já retorna o post completo com ID e data
+      setPosts((prevPosts) => [
+        {
+          ...response.data.post,
+          nome: usuarioLogado.nome, // Adiciona nome e sobrenome do usuário logado para exibição
+          sobrenome: usuarioLogado.sobrenome,
+        },
+        ...prevPosts,
+      ]);
+      setNovoPostTitulo("");
+      setNovoPostConteudo("");
+      setNovoPostIdioma("");
+      setLikes((prev) => ({ ...prev, [response.data.post.id]: 0 })); // Inicializa likes para o novo post
+    } catch (err) {
+      console.error("Erro ao criar post:", err);
+      setErro("Não foi possível criar o post. Verifique se você está logado.");
+    }
+  };
+
+  // ─── Funções de interação (likes, comentários) ───────────────────
+  const toggleLike = (postId) => {
+    setLikes((prev) => {
+      const atual = prev[postId] ?? 0;
+      const novo = atual === 0 ? 1 : 0; // Alterna entre 0 e 1 para simular like/deslike
+      // Futuramente: enviar requisição para o backend para registrar o like
+      return { ...prev, [postId]: novo };
+    });
+  };
+
   const toggleComentario = (postId) => {
     setComentarioAberto((prev) => (prev === postId ? null : postId));
-    setTextoComentario(""); // limpa o campo ao abrir/fechar
+    setTextoComentario("");
   };
 
-  // Filtra os posts pelo idioma selecionado na sidebar
+  // ─── Filtro de posts ─────────────────────────────────────────────
   const postsFiltrados =
     filtroAtivo === "Todos"
       ? posts
@@ -153,26 +151,22 @@ function Community() {
 
   // Chips de filtro disponíveis
   const filtros = [
-    "Todos", "Inglês", "Espanhol",
+    "Todos", "Português", "Inglês", "Espanhol",
     "Francês", "Alemão", "Japonês",
-    "Iniciantes", "Intermediário",
+    // "Iniciantes", "Intermediário", // Estes filtros precisariam de um campo 'nivel' no post
   ];
 
   return (
-    // Container principal com padding-top para compensar a Navbar fixa
     <div className="lc-community-page">
 
       {/* COLUNA ESQUERDA — filtros e grupos */}
       <aside className="lc-community-sidebar">
-
-        {/* Card de filtros por idioma */}
         <div className="lc-comm-card">
           <h2>Filtrar por idioma</h2>
           <div className="lc-chips">
             {filtros.map((filtro) => (
               <span
                 key={filtro}
-                // Aplica classe "active" no filtro selecionado
                 className={`lc-chip ${filtroAtivo === filtro ? "active" : ""}`}
                 onClick={() => setFiltroAtivo(filtro)}
               >
@@ -182,7 +176,6 @@ function Community() {
           </div>
         </div>
 
-        {/* Card de grupos temáticos */}
         <div className="lc-comm-card">
           <h2>Grupos</h2>
           <div className="lc-chips">
@@ -190,10 +183,8 @@ function Community() {
             <span className="lc-chip">Conversação em espanhol</span>
             <span className="lc-chip">Filmes em inglês</span>
           </div>
-          {/* Botão de criar grupo — futuramente abre um modal */}
           <button className="lc-btn-outline-dashed">+ Criar novo grupo</button>
         </div>
-
       </aside>
 
       {/* COLUNA CENTRAL — feed de posts */}
@@ -202,42 +193,55 @@ function Community() {
 
         {/* Card de criação de novo post */}
         <section className="lc-create-post">
-          {/* Avatar do usuário logado */}
-          <div className="lc-post-avatar lc-avatar-me">D</div>
+          <div className="lc-post-avatar lc-avatar-me">
+            {usuarioLogado.nome?.charAt(0).toUpperCase()}
+          </div>
 
           <div className="lc-create-post-main">
-            {/* Textarea controlada pelo estado novoPost */}
+            {erro && <p className="error-message">{erro}</p>}
+            <input
+              type="text"
+              className="lc-post-input"
+              placeholder="Título do seu post"
+              value={novoPostTitulo}
+              onChange={(e) => setNovoPostTitulo(e.target.value)}
+              required
+            />
             <textarea
               className="lc-post-textarea"
-              placeholder="Compartilhe uma dica, dúvida ou frase no seu idioma alvo..."
-              value={novoPost}
-              onChange={(e) => setNovoPost(e.target.value)}
-            />
+              placeholder="O que você gostaria de compartilhar?"
+              value={novoPostConteudo}
+              onChange={(e) => setNovoPostConteudo(e.target.value)}
+              rows="3"
+              required
+            ></textarea>
 
-            {/* Rodapé da criação: seletor de idioma + botão publicar */}
             <div className="lc-create-post-footer">
               <select
                 className="lc-select-lang"
-                value={idiomaPost}
-                onChange={(e) => setIdiomaPost(e.target.value)}
+                value={novoPostIdioma}
+                onChange={(e) => setNovoPostIdioma(e.target.value)}
+                required
               >
-                <option>Inglês</option>
-                <option>Espanhol</option>
-                <option>Português</option>
-                <option>Francês</option>
-                <option>Alemão</option>
-                <option>Japonês</option>
+                <option value="">Selecione o idioma</option>
+                <option value="Português">Português</option>
+                <option value="Inglês">Inglês</option>
+                <option value="Espanhol">Espanhol</option>
+                <option value="Francês">Francês</option>
+                <option value="Alemão">Alemão</option>
+                <option value="Japonês">Japonês</option>
               </select>
-              <button className="lc-btn-primary lc-btn-publish" onClick={publicarPost}>
-              Publicar
-            </button>
+              <button className="lc-btn-primary lc-btn-publish" onClick={criarPost}>
+                Publicar
+              </button>
             </div>
           </div>
         </section>
 
         {/* Lista de posts filtrados */}
-        {postsFiltrados.length === 0 ? (
-          // Estado vazio quando nenhum post bate no filtro
+        {carregandoPosts ? (
+          <p className="loading-message">Carregando posts...</p>
+        ) : postsFiltrados.length === 0 ? (
           <div className="lc-empty-state">
             <p>Nenhum post encontrado para esse filtro.</p>
             <span onClick={() => setFiltroAtivo("Todos")}>
@@ -246,11 +250,10 @@ function Community() {
           </div>
         ) : (
           postsFiltrados.map((post) => (
-            // Cada post vira um PostCard
             <PostCard
               key={post.id}
               post={post}
-              likes={likes[post.id] ?? post.likes}
+              likes={likes[post.id] ?? 0}
               onLike={() => toggleLike(post.id)}
               comentarioAberto={comentarioAberto === post.id}
               onToggleComentario={() => toggleComentario(post.id)}
@@ -263,8 +266,6 @@ function Community() {
 
       {/* COLUNA DIREITA — sugestões e destaques */}
       <aside className="lc-community-right">
-
-        {/* Sugestões de parceiros de prática */}
         <div className="lc-comm-card">
           <h3>Sugestões de parceiros</h3>
           {SUGESTOES_MOCK.map((s) => (
@@ -284,7 +285,6 @@ function Community() {
           <span className="lc-side-link">Ver todos</span>
         </div>
 
-        {/* Posts em destaque da semana */}
         <div className="lc-comm-card">
           <h3>Em destaque</h3>
           <p className="lc-trend-item">
@@ -297,14 +297,12 @@ function Community() {
             <span>#ExpressõesIdiomáticas</span> · 11 novos posts
           </p>
         </div>
-
       </aside>
     </div>
   );
 }
 
-// Componente PostCard — separado para manter o código organizado e legível
-// Recebe os dados do post e as funções de interação via props
+// Componente PostCard
 function PostCard({
   post,
   likes,
@@ -316,39 +314,40 @@ function PostCard({
 }) {
   return (
     <article className="lc-post-card">
-
-      {/* Avatar do autor do post */}
       <div
         className="lc-post-avatar"
-        style={{ background: post.cor }}
+        style={{ background: "linear-gradient(135deg, #4f46e5, #06b6d4)" }} // Cor fixa para o avatar
       >
-        {post.inicial}
+        {post.nome?.charAt(0).toUpperCase()}
       </div>
 
       <div className="lc-post-body">
-
-        {/* Cabeçalho do post: autor, tempo e tag de idioma */}
         <div className="lc-post-header">
           <div>
-            <span className="lc-post-author">{post.autor}</span>
-            <span className="lc-post-time"> · {post.tempo}</span>
+            <span className="lc-post-author">
+              {post.nome} {post.sobrenome}
+            </span>
+            <span className="lc-post-time">
+              {" "}·{" "}
+              {formatDistanceToNow(new Date(post.criado_em), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            </span>
           </div>
-          <span className="lc-post-tag">{post.idioma}</span>
+          <span className="lc-post-tag">#{post.idioma}</span>
         </div>
 
-        {/* Texto do post */}
-        <p className="lc-post-text">{post.texto}</p>
+        <h3 className="lc-post-title">{post.titulo}</h3>
+        <p className="lc-post-text">{post.conteudo}</p>
 
-        {/* Rodapé com likes e comentários */}
         <div className="lc-post-footer">
-          {/* Botão de like — chama onLike ao clicar */}
           <span onClick={onLike} className="lc-post-action">
             ❤️ {likes}
           </span>
 
-          {/* Botão de comentário — abre/fecha o input abaixo */}
           <span onClick={onToggleComentario} className="lc-post-action">
-            💬 {post.comentarios} comentários
+            💬 {post.comentarios || 0} comentários
           </span>
 
           <span onClick={onToggleComentario} className="lc-post-action">
@@ -356,21 +355,18 @@ function PostCard({
           </span>
         </div>
 
-        {/* Área de comentário — visível apenas quando comentarioAberto === true */}
         {comentarioAberto && (
           <div className="lc-comment-input">
-            {/* Avatar do usuário logado */}
-            <div className="lc-comment-avatar">D</div>
+            <div className="lc-comment-avatar">
+              {post.nome?.charAt(0).toUpperCase()}
+            </div>
 
-            {/* Input de texto do comentário */}
             <input
               placeholder="Escreva um comentário..."
               value={textoComentario}
               onChange={onChangeComentario}
             />
 
-            {/* Botão de envio do comentário
-                Futuramente: await api.post("/comentarios", { postId, texto }) */}
             <button
               onClick={() => {
                 if (textoComentario.trim()) {
@@ -382,7 +378,6 @@ function PostCard({
             </button>
           </div>
         )}
-
       </div>
     </article>
   );

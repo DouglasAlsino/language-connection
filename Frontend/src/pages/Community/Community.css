@@ -422,3 +422,44 @@
   margin-top: 8px;
   display: inline-block;
 }
+
+/* Adicione isso em algum lugar no seu Community.css */
+.lc-post-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0f172a;
+  background: #f9fafb;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.lc-post-input::placeholder {
+  color: #9ca3af;
+}
+
+.lc-post-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+}
+
+
+.error-message {
+  color: #e53e3e; /* Vermelho para mensagens de erro */
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+}
+
+.loading-message {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-size: 1.1em;
+}
