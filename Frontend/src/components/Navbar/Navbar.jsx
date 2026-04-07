@@ -51,7 +51,7 @@ function Navbar() {
     }
   };
 
-  // Busca ao montar e a cada 30 segundos
+  // Busca ao montar e a cada 15 segundos
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return; // não busca nada se não estiver logado

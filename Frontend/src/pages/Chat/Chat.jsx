@@ -24,6 +24,7 @@ function Chat() {
   const [mensagens, setMensagens] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState("");
   const [carregandoMensagens, setCarregandoMensagens] = useState(false);
+  const [termoBuscaConversa, setTermoBuscaConversa] = useState("");
 
   // ─── Conecta o socket e registra os listeners ─────────────────────
   useEffect(() => {
@@ -137,13 +138,30 @@ function Chat() {
     });
   };
 
+  // ─── Lógica de filtro para as conversas ──────────────────────────
+const conexoesFiltradas = conexoes.filter((conexao) => {
+  const termo = termoBuscaConversa.toLowerCase();
+  // Filtra pelo nome, sobrenome ou idioma nativo/aprendendo do contato
+  return (
+    conexao.nome.toLowerCase().includes(termo) ||
+    conexao.sobrenome.toLowerCase().includes(termo) ||
+    conexao.idioma_nativo.toLowerCase().includes(termo) ||
+    conexao.idiomas_aprender.toLowerCase().includes(termo)
+  );
+});
+
   return (
     <div className="lc-chat-page">
 
       <aside className="lc-chat-sidebar">
         <div className="lc-chat-sidebar-header">
           <h2>Mensagens</h2>
-          <input className="lc-chat-search" placeholder="Buscar conversa" />
+          <input 
+          className="lc-chat-search"
+          placeholder="Buscar conversa"
+          value={termoBuscaConversa}
+          onChange={(e) => setTermoBuscaConversa(e.target.value)}
+           />
         </div>
 
         <div className="lc-conversations">
@@ -152,7 +170,7 @@ function Chat() {
               Você ainda não tem conexões. Conecte-se com alguém para começar a conversar!
             </p>
           ) : (
-            conexoes.map((conexao) => (
+            conexoesFiltradas.map((conexao) => (
               <div
                 key={conexao.id}
                 className={`lc-conversation-item ${conversaAtiva?.id === conexao.id ? "active" : ""}`}

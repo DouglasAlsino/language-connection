@@ -46,6 +46,9 @@ app.get("/health", (req, res) => {
 const mensagensRoutes = require("./src/routes/mensagensRoutes");
 app.use("/mensagens", mensagensRoutes);
 
+const postsRoutes = require("./src/routes/postsRoutes");
+app.use("/posts", postsRoutes); 
+
 // ─── Socket.IO ────────────────────────────────────────
 // io.on("connection") é disparado toda vez que um cliente conecta
 // o objeto "socket" representa a conexão individual daquele cliente
