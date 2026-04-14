@@ -4,19 +4,23 @@ import "./LearningPage.css";
 
 function LearningPage() {
   const [topico, setTopico] = useState("");
-  const [idioma, setIdioma] = useState("Português"); // Idioma padrão
+  const [idioma, setIdioma] = useState("Português");
   const [idiomaNativo, setIdiomaNativo] = useState("Português"); // Idioma padrão
-  const [nivel, setNivel] = useState("Básico"); // Nível padrão
-  const [explicacaoIA, setExplicacaoIA] = useState(null); // Armazena a resposta da IA
+  const [nivel, setNivel] = useState("Básico");
+  const [explicacaoIA, setExplicacaoIA] = useState(null);
+  const [quizIA, setQuizIA] = useState(null); // Novo estado para o quiz
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
+  const [quizCorrigido, setQuizCorrigido] = useState(false); // Para saber se o quiz já foi corrigido
 
   const token = localStorage.getItem("token");
 
   const handleGerarExplicacao = async (e) => {
     e.preventDefault();
     setErro("");
-    setExplicacaoIA(null); // Limpa a explicação anterior
+    setExplicacaoIA(null);
+    setQuizIA(null); // Limpa o quiz ao gerar nova explicação
+    setQuizCorrigido(false);
 
     if (!topico.trim()) {
       setErro("Por favor, insira um tópico para aprender.");
@@ -26,19 +30,110 @@ function LearningPage() {
     setCarregando(true);
     try {
       const response = await axios.post(
-        "http://localhost:3000/ia/ensinar", // Nosso endpoint do backend
-        { topico, idioma, nivel },
+        "http://localhost:3000/ia/ensinar",
+        { topico, idioma, idiomaNativo, nivel },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setExplicacaoIA(response.data); // Armazena a explicação formatada
+      setExplicacaoIA(response.data);
     } catch (err) {
       console.error("Erro ao gerar explicação:", err);
       setErro("Não foi possível gerar a explicação. Tente novamente mais tarde.");
       if (err.response && err.response.data && err.response.data.mensagem) {
         setErro(err.response.data.mensagem);
       }
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Nova função para gerar o quiz
+  const handleGerarQuiz = async () => {
+    setErro("");
+    setQuizIA(null); // Limpa o quiz anterior
+    setQuizCorrigido(false);
+
+    setCarregando(true);
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/ia/gerar-quiz", // Nosso novo endpoint de quiz
+        {
+          topico,
+          idioma,
+          nivel,
+          explicacao: explicacaoIA ? JSON.stringify(explicacaoIA) : undefined, // Envia a explicação como string
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setQuizIA(response.data);
+    } catch (err) {
+      console.error("Erro ao gerar quiz:", err);
+      setErro("Não foi possível gerar o quiz. Tente novamente mais tarde.");
+      if (err.response && err.response.data && err.response.data.mensagem) {
+        setErro(err.response.data.mensagem);
+      }
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Função para lidar com a resposta do usuário no quiz
+  const handleRespostaQuiz = (perguntaId, resposta) => {
+    setQuizIA((prevQuiz) => {
+      const novasPerguntas = prevQuiz.perguntas.map((p) =>
+        p.id === perguntaId ? { ...p, resposta_usuario: resposta } : p
+      );
+      return { ...prevQuiz, perguntas: novasPerguntas };
+    });
+  };
+
+  // Função para corrigir o quiz
+  const handleCorrigirQuiz = () => {
+    setQuizIA((prevQuiz) => {
+      const novasPerguntas = prevQuiz.perguntas.map((p) => ({
+        ...p,
+        correta: p.resposta_usuario === p.resposta_correta,
+      }));
+      return { ...prevQuiz, perguntas: novasPerguntas };
+    });
+    setQuizCorrigido(true);
+  };
+
+  // Calcula a pontuação
+  const calcularPontuacao = () => {
+    if (!quizIA || !quizCorrigido) return 0;
+    const corretas = quizIA.perguntas.filter(p => p.correta).length;
+    return (corretas / quizIA.perguntas.length) * 100;
+  };
+
+  // Função para compartilhar na comunidade
+  const handleCompartilhar = async () => {
+    try {
+      setCarregando(true);
+      const pontuacao = calcularPontuacao();
+
+      await axios.post(
+        "http://localhost:3000/posts/compartilhar-aprendizado",
+        {
+          topico,
+          idioma,
+          nivel,
+          pontuacao: pontuacao.toFixed(0),
+          explicacao: explicacaoIA,
+          quiz: quizIA,
+        },
+        {
+           headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("Seu aprendizado foi compartilhado na comunidade!");
+    } catch (err) {
+      console.error("Erro ao compartilhar:", err);
+      setErro("Não foi possível compartilhar. Tente novamente.");
     } finally {
       setCarregando(false);
     }
@@ -70,7 +165,7 @@ function LearningPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="idioma">Idioma Alvo:</label>
+            <label htmlFor="idioma">Idioma:</label>
             <select
               id="idioma"
               value={idioma}
@@ -142,7 +237,74 @@ function LearningPage() {
             ))}
           </ol>
           <p><strong>Resumo:</strong> {explicacaoIA.resumo}</p>
-          {/* Futuramente: Botão para gerar quiz ou compartilhar */}
+
+          <button
+            onClick={handleGerarQuiz}
+            className="learning-submit-btn generate-quiz-btn"
+            disabled={carregando}
+          >
+            {carregando ? "Gerando Quiz..." : "Gerar Quiz"}
+          </button>
+        </div>
+      )}
+
+      {/* Área para exibir o quiz da IA */}
+      {quizIA && (
+        <div className="ia-quiz-card">
+          <h3>{quizIA.titulo_quiz}</h3>
+          {quizIA.perguntas.map((pergunta) => (
+            <div key={pergunta.id} className="quiz-question">
+              <p className="question-text">{pergunta.id}. {pergunta.pergunta}</p>
+              <div className="options-container">
+                {Object.entries(pergunta.opcoes).map(([key, value]) => (
+                  <label
+                    key={key}
+                    className={`option-label ${
+                      quizCorrigido && pergunta.resposta_correta === key ? 'correct-option' : ''
+                    } ${
+                      quizCorrigido && pergunta.resposta_usuario === key && pergunta.resposta_usuario !== pergunta.resposta_correta ? 'incorrect-option' : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`pergunta-${pergunta.id}`}
+                      value={key}
+                      checked={pergunta.resposta_usuario === key}
+                      onChange={() => handleRespostaQuiz(pergunta.id, key)}
+                      disabled={quizCorrigido}
+                    />
+                    {key}) {value}
+                  </label>
+                ))}
+              </div>
+              {quizCorrigido && (
+                <p className={`feedback-text ${pergunta.correta ? 'correct-feedback' : 'incorrect-feedback'}`}>
+                  {pergunta.correta ? "Correto!" : `Incorreto. A resposta correta era: ${pergunta.resposta_correta}) ${pergunta.opcoes[pergunta.resposta_correta]}`}
+                </p>
+              )}
+            </div>
+          ))}
+          {!quizCorrigido && (
+            <button
+              onClick={handleCorrigirQuiz}
+              className="learning-submit-btn correct-quiz-btn"
+              disabled={carregando || quizIA.perguntas.some(p => !p.resposta_usuario)} // Desabilita se nem todas as perguntas foram respondidas
+            >
+              Corrigir Quiz
+            </button>
+          )}
+          {quizCorrigido && (
+            <div className="quiz-score">
+              <h4>Sua Pontuação: {calcularPontuacao().toFixed(0)}%</h4>
+              <button
+                onClick={handleCompartilhar}
+                className="learning-submit-btn share-btn"
+                disabled={carregando}
+              >
+                {carregando ? "Compartilhando..." : "Compartilhar na Comunidade"}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

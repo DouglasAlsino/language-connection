@@ -12,7 +12,7 @@ const groq = new Groq({
 router.post("/ensinar", authMiddleware, async (req, res) => {
   try {
     const { topico, idioma,idiomaNativo, nivel } = req.body;
-if (!topico || !idioma || idiomaNativo || !nivel) {
+if (!topico || !idioma || !idiomaNativo || !nivel) {
   return res.status(400).json({ mensagem: "Tópico, idioma e nível são obrigatórios." });
 }
 
@@ -88,5 +88,97 @@ res.json(parsedResponse); // Retorna a explicação formatada
     res.status(500).json({ mensagem: "Erro interno do servidor ao processar a requisição da IA." });
   }
 });
+// ─── Rota para gerar Quiz com IA ──────────────────
+router.post("/gerar-quiz", authMiddleware, async (req, res) => {
+  try {
+    const { topico, idioma, nivel, explicacao } = req.body; // 'explicacao' é opcional
+
+    if (!topico || !idioma || !nivel) {
+      return res.status(400).json({ mensagem: "Tópico, idioma e nível são obrigatórios para gerar o quiz." });
+    }
+
+    let prompt = `Você é um professor de idiomas e está criando um quiz.
+    Gere um quiz de múltipla escolha com 3 perguntas sobre o tópico "${topico}" no idioma "${idioma}",
+    adaptado para um aluno de nível "${nivel}".
+    Cada pergunta deve ter 4 opções de resposta (A, B, C, D), onde apenas uma é correta.
+    Inclua também a resposta correta para cada pergunta.`;
+
+    if (explicacao) {
+      prompt += `\nConsidere a seguinte explicação para basear as perguntas do quiz:\n${explicacao}`;
+    }
+
+    prompt += `\nFormate a resposta em JSON com a seguinte estrutura:
+    {
+      "titulo_quiz": "Quiz sobre [Tópico]",
+      "perguntas": [
+        {
+          "id": 1,
+          "pergunta": "Texto da pergunta 1?",
+          "opcoes": {
+            "A": "Opção A",
+            "B": "Opção B",
+            "C": "Opção C",
+            "D": "Opção D"
+          },
+          "resposta_correta": "A"
+        },
+        {
+          "id": 2,
+          "pergunta": "Texto da pergunta 2?",
+          "opcoes": {
+            "A": "Opção A",
+            "B": "Opção B",
+            "C": "Opção C",
+            "D": "Opção D"
+          },
+          "resposta_correta": "B"
+        }
+        // ... mais perguntas
+      ]
+    }`;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "llama-3.1-8b-instant",
+      temperature: 0.8, // Um pouco mais de criatividade para o quiz
+      max_tokens: 1000,
+      response_format: { type: "json_object" },
+    });
+
+    const iaResponseContent = chatCompletion.choices[0]?.message?.content;
+
+    if (!iaResponseContent) {
+      return res.status(500).json({ mensagem: "A IA não gerou conteúdo para o quiz." });
+    }
+
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(iaResponseContent);
+    } catch (jsonError) {
+      console.error("Erro ao fazer parse do JSON do quiz da IA:", jsonError);
+      console.error("Conteúdo bruto da IA:", iaResponseContent);
+      return res.status(500).json({ mensagem: "A IA retornou um formato inválido para o quiz.", raw: iaResponseContent });
+    }
+
+    // Adiciona um campo para as respostas do usuário e status de correção
+    parsedResponse.perguntas = parsedResponse.perguntas.map(p => ({
+      ...p,
+      resposta_usuario: null, // Onde o usuário vai armazenar a resposta
+      correta: null // true/false após a correção
+    }));
+
+    res.json(parsedResponse);
+
+  } catch (error) {
+    console.error("Erro ao gerar quiz com IA:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor ao gerar o quiz." });
+  }
+});
+
 
 module.exports = router;
