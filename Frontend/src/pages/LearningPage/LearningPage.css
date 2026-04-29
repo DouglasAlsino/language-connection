@@ -256,3 +256,163 @@
   font-weight: 700;
   color: #3b30d4;
 }
+
+.lp-modo-tema {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.lp-modo-tema p {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.lp-modo-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.lp-btn-modo {
+  padding: 10px 20px;
+  border: 2px solid #4f46e5;
+  background-color: white;
+  color: #4f46e5;
+  border-radius: 8px;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-btn-modo:hover {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.lp-btn-modo-sortear {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.lp-btn-modo-sortear:hover {
+  background-color: #10b981;
+  color: white;
+}
+
+.lp-campo-tema {
+  margin: 15px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lp-campo-tema label {
+  font-size: 0.95em;
+  color: #555;
+}
+
+.lp-input-tema {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1em;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.lp-input-tema:focus {
+  border-color: #4f46e5;
+}
+
+.lp-tema-sorteado {
+  background-color: #e0e7ff;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.lp-tema-sorteado p {
+  color: #555;
+  margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+.lp-tema-sorteado strong {
+  display: block;
+  font-size: 1.3em;
+  color: #4f46e5;
+  margin-bottom: 15px;
+}
+
+.lp-tema-sorteado-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.lp-btn-novo-sorteio {
+  padding: 8px 18px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.lp-btn-novo-sorteio:hover {
+  background-color: #059669;
+}
+
+.lp-btn-voltar {
+  padding: 8px 18px;
+  background-color: transparent;
+  color: #888;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+.lp-btn-voltar:hover {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+.lp-sortear-vazio {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-btn-sortear {
+  padding: 10px 25px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.lp-btn-sortear:hover:not(:disabled) {
+  background-color: #3b30d4;
+}
+
+.lp-btn-sortear:disabled {
+  background-color: #a7a3e6;
+  cursor: not-allowed;
+}
+
+.lp-aviso-sortear {
+  font-size: 0.85em;
+  color: #e53e3e;
+}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./LearningPage.css";
+import { temasPorIdiomaENivel } from "../../data/temasAprendizado";
 
 function LearningPage() {
   const [topico, setTopico] = useState("");
@@ -8,10 +9,13 @@ function LearningPage() {
   const [idiomaNativo, setIdiomaNativo] = useState("Português"); // Idioma padrão
   const [nivel, setNivel] = useState("Básico");
   const [explicacaoIA, setExplicacaoIA] = useState(null);
+  const [sessaoId, setSessaoId] = useState(null);
   const [quizIA, setQuizIA] = useState(null); // Novo estado para o quiz
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [quizCorrigido, setQuizCorrigido] = useState(false); // Para saber se o quiz já foi corrigido
+  const [modoEscolhaTema, setModoEscolhaTema] = useState(null); // 'sugerir' ou 'sortear'
+  const [temaSorteado, setTemaSorteado] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -37,6 +41,18 @@ function LearningPage() {
         }
       );
       setExplicacaoIA(response.data);
+      // Salva a sessão no banco e guarda o id para vincular ao quiz depois
+      try {
+        const resSessao = await axios.post(
+          "http://localhost:3000/atividades/sessao",
+          { idioma, idioma_nativo: idiomaNativo, nivel, tema: topico },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setSessaoId(resSessao.data.sessao_id);
+      } catch (err) {
+        console.warn("Não foi possível salvar a sessão:", err);
+        // Erro silencioso — não interrompe a experiência do usuário
+      }
     } catch (err) {
       console.error("Erro ao gerar explicação:", err);
       setErro("Não foi possível gerar a explicação. Tente novamente mais tarde.");
@@ -91,16 +107,35 @@ function LearningPage() {
   };
 
   // Função para corrigir o quiz
-  const handleCorrigirQuiz = () => {
-    setQuizIA((prevQuiz) => {
-      const novasPerguntas = prevQuiz.perguntas.map((p) => ({
-        ...p,
-        correta: p.resposta_usuario === p.resposta_correta,
-      }));
-      return { ...prevQuiz, perguntas: novasPerguntas };
-    });
-    setQuizCorrigido(true);
-  };
+  const handleCorrigirQuiz = async () => {
+  // Primeiro calcula as perguntas corrigidas
+  const novasPerguntas = quizIA.perguntas.map((p) => ({
+    ...p,
+    correta: p.resposta_usuario === p.resposta_correta,
+  }));
+
+  // Atualiza o estado com as perguntas corrigidas
+  setQuizIA((prevQuiz) => ({ ...prevQuiz, perguntas: novasPerguntas }));
+  setQuizCorrigido(true);
+
+  // Salva o resultado no banco
+  const corretas = novasPerguntas.filter((p) => p.correta).length;
+  try {
+    await axios.post(
+      "http://localhost:3000/atividades/quiz",
+      {
+        sessao_id: sessaoId,
+        idioma,
+        tema: topico,
+        pontuacao: Math.round((corretas / novasPerguntas.length) * 100),
+        total_questoes: novasPerguntas.length,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  } catch (err) {
+    console.warn("Não foi possível salvar o quiz:", err);
+  }
+};
 
   // Calcula a pontuação
   const calcularPontuacao = () => {
@@ -139,6 +174,15 @@ function LearningPage() {
     }
   };
 
+  const sortearTema = () => {
+  if (!idioma || !nivel) return;
+  const temas = temasPorIdiomaENivel[idioma]?.[nivel];
+  if (!temas || temas.length === 0) return;
+  const indiceAleatorio = Math.floor(Math.random() * temas.length);
+  setTemaSorteado(temas[indiceAleatorio]);
+  setTopico(temas[indiceAleatorio]);
+  };
+
   return (
     <div className="learning-page-container">
       <h1 className="learning-title">Aprendizado com IA</h1>
@@ -151,18 +195,6 @@ function LearningPage() {
         <form onSubmit={handleGerarExplicacao}>
           {erro && <p className="error-message">{erro}</p>}
 
-          <div className="form-group">
-            <label htmlFor="topico">Tópico:</label>
-            <input
-              id="topico"
-              type="text"
-              placeholder="Ex: Present Simple, Subjunctive Mood, Vocabulário de Viagem"
-              value={topico}
-              onChange={(e) => setTopico(e.target.value)}
-              className="learning-input"
-              required
-            />
-          </div>
 
           <div className="form-group">
             <label htmlFor="idioma">Idioma:</label>
@@ -211,6 +243,114 @@ function LearningPage() {
               <option value="Avançado">Avançado</option>
             </select>
           </div>
+
+          {/* Escolha do modo de seleção de tema */}
+          {!modoEscolhaTema && (
+            <div className="lp-modo-tema">
+              <p>Como você quer escolher o tema?</p>
+              <div className="lp-modo-btns">
+                <button
+                  type="button"
+                  className="lp-btn-modo"
+                  onClick={() => {
+                    setModoEscolhaTema("sugerir");
+                    setTemaSorteado(null);
+                    setTopico("");
+                  }}
+                >
+                  Quero sugerir um tema
+                </button>
+                <button
+                  type="button"
+                  className="lp-btn-modo lp-btn-modo-sortear"
+                  onClick={() => {
+                    setModoEscolhaTema("sortear");
+                    setTemaSorteado(null);
+                    setTopico("");
+                  }}
+                >
+                  Me sugira um tema
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Modo: usuário sugere o tema */}
+          {modoEscolhaTema === "sugerir" && (
+            <div className="lp-campo-tema">
+              <label>Tema que você quer aprender:</label>
+              <input
+                type="text"
+                placeholder="Ex: Present Perfect, Vocabulário de viagens..."
+                value={topico}
+                onChange={(e) => setTopico(e.target.value)}
+                className="lp-input-tema"
+              />
+              <button
+                type="button"
+                className="lp-btn-voltar"
+                onClick={() => setModoEscolhaTema(null)}
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+          {/* Modo: sortear tema */}
+          {modoEscolhaTema === "sortear" && (
+            <div className="lp-campo-tema">
+              {temaSorteado ? (
+                <div className="lp-tema-sorteado">
+                  <p>Tema sorteado:</p>
+                  <strong>{temaSorteado}</strong>
+                  <div className="lp-tema-sorteado-btns">
+                    <button
+                      type="button"
+                      className="lp-btn-novo-sorteio"
+                      onClick={sortearTema}
+                    >
+                      Sortear outro
+                    </button>
+                    <button
+                      type="button"
+                      className="lp-btn-voltar"
+                      onClick={() => {
+                        setModoEscolhaTema(null);
+                        setTemaSorteado(null);
+                        setTopico("");
+                      }}
+                    >
+                      ← Voltar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="lp-sortear-vazio">
+                  <p>Clique para sortear um tema de acordo com seu nível:</p>
+                  <button
+                    type="button"
+                    className="lp-btn-sortear"
+                    onClick={sortearTema}
+                    disabled={!idioma || !nivel}
+                  >
+                    Sortear tema
+                  </button>
+                  <button
+                    type="button"
+                    className="lp-btn-voltar"
+                    onClick={() => setModoEscolhaTema(null)}
+                  >
+                    ← Voltar
+                  </button>
+                  {(!idioma || !nivel) && (
+                    <p className="lp-aviso-sortear">
+                      Selecione o idioma e o nível antes de sortear.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <button type="submit" className="learning-submit-btn" disabled={carregando}>
             {carregando ? "Gerando..." : "Gerar Explicação"}

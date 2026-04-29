@@ -1,0 +1,145 @@
+.ep-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ep-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ep-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ep-modal-header h2 {
+  font-size: 1.2em;
+  color: #1e293b;
+  margin: 0;
+}
+
+.ep-btn-fechar {
+  background: none;
+  border: none;
+  font-size: 1.1em;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.ep-btn-fechar:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ep-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ep-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.ep-campo label {
+  font-size: 0.875em;
+  font-weight: 600;
+  color: #475569;
+}
+
+.ep-campo select,
+.ep-campo textarea {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95em;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  resize: none;
+}
+
+.ep-campo select:focus,
+.ep-campo textarea:focus {
+  border-color: #4f46e5;
+}
+
+.ep-contador {
+  font-size: 0.78em;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.ep-erro {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.875em;
+  margin: 0;
+}
+
+.ep-form-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.ep-btn-cancelar {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ep-btn-cancelar:hover {
+  background: #f8fafc;
+}
+
+.ep-btn-salvar {
+  padding: 10px 24px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ep-btn-salvar:hover:not(:disabled) {
+  background: #3b30d4;
+}
+
+.ep-btn-salvar:disabled {
+  background: #a7a3e6;
+  cursor: not-allowed;
+}
