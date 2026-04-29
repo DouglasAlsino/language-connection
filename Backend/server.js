@@ -52,6 +52,9 @@ app.use("/posts", postsRoutes);
 const iaRoutes = require("./src/routes/iaRoutes"); // Importa as rotas de IA
 app.use("/ia", iaRoutes); // Usa as rotas de IA com o prefixo /ia
 
+const atividadesRoutes = require("./src/routes/atividades");
+app.use("/atividades", atividadesRoutes);
+
 // ─── Socket.IO ────────────────────────────────────────
 // io.on("connection") é disparado toda vez que um cliente conecta
 // o objeto "socket" representa a conexão individual daquele cliente

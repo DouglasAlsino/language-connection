@@ -21,7 +21,9 @@ const prompt = `Você é um professor de idiomas experiente, extremamente didát
 
 Sua tarefa é gerar uma explicação completa e fácil de assimilar sobre o tópico de idioma "${topico}", use analogias para facilitar o entendimento para o aluno.
 
-A explicação principal deve ser redigida inteiramente no idioma nativo do aluno, que é "${idiomaNativo}". No entanto, todos os exemplos práticos e o exercício de fixação devem ser apresentados no idioma que o aluno está aprendendo, que é "${idioma}".
+A explicação principal deve ser redigida inteiramente no idioma nativo do aluno, que é "${idiomaNativo}".
+
+No entanto, todos os exemplos práticos e o exercício de fixação devem ser apresentados no idioma que o aluno está aprendendo, que é "${idioma}", e todos os exemplos que usar use transição fonetica e Pronúncia Figurada/Escrita Fonética para que a pessoa aprenda a pronuncia tambem.
 
 Adapte todo o conteúdo, a linguagem e a complexidade dos exemplos para um aluno de nível "${nivel}". Os exemplos devem ser curtos, claros e diretamente relacionados ao tópico.
 
