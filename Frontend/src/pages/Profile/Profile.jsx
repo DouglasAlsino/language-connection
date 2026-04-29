@@ -2,6 +2,7 @@ import "./Profile.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import EditarPerfilModal from "../../components/EditarPerfilModal/EditarPerfilModal.jsx";
 
 // Componente separado para cada conexão na lista
 // Isso resolve o problema do useState dentro do map
@@ -62,10 +63,12 @@ function Perfil() {
   const [conexoes, setConexoes] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState("atividade");
   const [carregando, setCarregando] = useState(true);
+  const [atividades, setAtividades] = useState([]);
 
   const token = localStorage.getItem("token");
   const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
   const idAlvo = id || usuarioLogado.id;
+  const [modalEditarAberto, setModalEditarAberto] = useState(false);
 
   // isProprioPeril controla se mostramos o botão "Desconectar"
   // Só o dono do perfil pode remover suas próprias conexões
@@ -80,6 +83,12 @@ function Perfil() {
           `http://localhost:3000/usuarios/${idAlvo}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        const resAtividades = await axios.get(
+          `http://localhost:3000/atividades/${idAlvo}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setAtividades(resAtividades.data);
 
         const resConexoes = await axios.get(
           `http://localhost:3000/conexoes/aceitas/${idAlvo}`,
@@ -147,20 +156,20 @@ function Perfil() {
             </div>
 
             {isProprioPeril ? (
-              <button
-                className="lc-btn-edit"
-                onClick={() => alert("Funcionalidade disponível em breve!")}
-              >
-                Editar perfil
-              </button>
-            ) : (
-              <button
-                className="lc-btn-message"
-                onClick={() => navigate("/chat")}
-              >
-                Enviar mensagem
-              </button>
-            )}
+                <button
+                  className="lc-btn-edit"
+                  onClick={() => setModalEditarAberto(true)}
+                >
+                  Editar perfil
+                </button>
+              ) : (
+                <button
+                  className="lc-btn-message"
+                  onClick={() => navigate("/chat")}
+                >
+                  Enviar mensagem
+                </button>
+           )}
 
           </div>
         </div>
@@ -180,7 +189,7 @@ function Perfil() {
                 <span className="lc-idioma-nome">{perfil.idiomas_aprender}</span>
                 <span className="lc-idioma-tipo">Aprendendo</span>
               </div>
-              <span className={`lc-nivel-badge lc-nivel-${perfil.nivel?.toLowerCase() || "a1"}`}>
+              <span className={`lc-nivel-badge lc-nivel-b1`}>
                 {perfil.nivel || "A1"}
               </span>
             </div>
@@ -211,11 +220,34 @@ function Perfil() {
 
         {abaAtiva === "atividade" && (
           <div className="lc-aba-content">
-            <div className="lc-atividade-card">
-              <p style={{ color: "#94a3b8", textAlign: "center", padding: "32px 0" }}>
-                Nenhuma atividade ainda.
-              </p>
-            </div>
+            {atividades.length === 0 ? (
+              <div className="lc-atividade-card">
+                <p style={{ color: "#94a3b8", textAlign: "center", padding: "32px 0" }}>
+                  Nenhuma atividade ainda.
+                </p>
+              </div>
+            ) : (
+              atividades.map((atividade) => (
+                <div key={`${atividade.tipo}-${atividade.id}`} className="lc-atividade-item">
+                  <div className="lc-atividade-icone">
+                    {atividade.tipo === "aprendizado" && "📚"}
+                    {atividade.tipo === "quiz" && "🧠"}
+                    {atividade.tipo === "post" && "💬"}
+                  </div>
+                  <div className="lc-atividade-info">
+                    <div className="lc-atividade-titulo">
+                      {atividade.tipo === "aprendizado" && `Estudou: ${atividade.tema}`}
+                      {atividade.tipo === "quiz" && `Quiz: ${atividade.tema} — ${atividade.pontuacao}%`}
+                      {atividade.tipo === "post" && `Publicou: ${atividade.tema}`}
+                    </div>
+                    <div className="lc-atividade-meta">
+                      {atividade.idioma} {atividade.nivel ? `· ${atividade.nivel}` : ""} ·{" "}
+                      {new Date(atividade.criado_em).toLocaleDateString("pt-BR")}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
@@ -258,6 +290,14 @@ function Perfil() {
         )}
 
       </main>
+      {modalEditarAberto && (
+      <EditarPerfilModal
+        perfil={perfil}
+        token={token}
+        onFechar={() => setModalEditarAberto(false)}
+        onSalvar={(dadosAtualizados) => setPerfil((prev) => ({ ...prev, ...dadosAtualizados }))}
+      />
+     )}
     </div>
   );
 }

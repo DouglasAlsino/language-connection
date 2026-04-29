@@ -53,4 +53,31 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /usuarios/:id — atualizar perfil
+router.put("/:id", authMiddleware, async (req, res) => {
+  console.log("id da URL:", req.params.id, typeof req.params.id);
+  console.log("id do token:", req.usuarioId, typeof req.usuario.id);
+  const { id } = req.params;
+  const { bio, idioma_nativo, idiomas_aprender, nivel } = req.body;
+
+  // Garante que o usuário só pode editar o próprio perfil
+  if (parseInt(id) !== req.usuario.id) {
+    return res.status(403).json({ mensagem: "Acesso negado." });
+  }
+
+  try {
+    await db.query(
+      `UPDATE usuarios 
+       SET bio = ?, idioma_nativo = ?, idiomas_aprender = ?, nivel = ?
+       WHERE id = ?`,
+      [bio, idioma_nativo, idiomas_aprender, nivel, id]
+    );
+
+    res.json({ mensagem: "Perfil atualizado com sucesso." });
+  } catch (error) {
+    console.error("Erro ao atualizar perfil:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor." });
+  }
+});
+
 module.exports = router;

@@ -29,18 +29,28 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 // ─── Listar todos os posts (feed da comunidade) ───────────────────
+// ─── Listar todos os posts (feed da comunidade) ───────────────────
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    // Busca todos os posts, juntando com as informações do usuário que postou
     const [rows] = await db.query(
-      `SELECT p.id, p.titulo, p.conteudo, p.idioma, p.criado_em, p.atualizado_em,
+      `SELECT p.id, p.titulo, p.conteudo, p.idioma, p.tipo, p.pontuacao_quiz,
+              p.dados_aprendizado, p.criado_em, p.atualizado_em,
               u.id AS usuario_id, u.nome, u.sobrenome, u.idioma_nativo
        FROM posts p
        JOIN usuarios u ON p.usuario_id = u.id
-       ORDER BY p.criado_em DESC` // Adicionado 'p.idioma'
+       ORDER BY p.criado_em DESC`
     );
 
-    res.json(rows);
+    // Parseia o campo dados_aprendizado para cada post do tipo aprendizado
+    const postsTratados = rows.map((post) => ({
+      ...post,
+      dados_aprendizado:
+        post.dados_aprendizado && typeof post.dados_aprendizado === "string"
+          ? JSON.parse(post.dados_aprendizado)
+          : post.dados_aprendizado,
+    }));
+
+    res.json(postsTratados);
   } catch (error) {
     console.error("Erro ao listar posts:", error);
     res.status(500).json({ mensagem: "Erro interno do servidor" });
@@ -118,6 +128,49 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Erro ao deletar post:", error);
     res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+});
+
+// ─── Compartilhar aprendizado na comunidade ───────────────────────
+router.post("/compartilhar-aprendizado", authMiddleware, async (req, res) => {
+  try {
+    const usuario_id = req.usuario.id;
+    const { topico, idioma, nivel, pontuacao, explicacao, quiz } = req.body;
+
+    if (!topico || !idioma || !nivel || pontuacao === undefined) {
+      return res.status(400).json({ mensagem: "Tópico, idioma, nível e pontuação são obrigatórios." });
+    }
+
+    // Monta o título e conteúdo automaticamente
+    const titulo = `Estudei ${topico} em ${idioma}!`;
+    const conteudo = `Acabei de completar uma sessão de aprendizado sobre "${topico}" no nível ${nivel} e tirei ${pontuacao}% no quiz! Confira a explicação e tente o quiz também.`;
+
+    // Dados do aprendizado para guardar no banco
+    const dados_aprendizado = JSON.stringify({ topico, nivel, explicacao, quiz });
+
+    const [result] = await db.query(
+      `INSERT INTO posts 
+        (usuario_id, titulo, conteudo, idioma, tipo, pontuacao_quiz, dados_aprendizado) 
+       VALUES (?, ?, ?, ?, 'aprendizado', ?, ?)`,
+      [usuario_id, titulo, conteudo, idioma, pontuacao, dados_aprendizado]
+    );
+
+    res.status(201).json({
+      mensagem: "Aprendizado compartilhado com sucesso!",
+      post: {
+        id: result.insertId,
+        usuario_id,
+        titulo,
+        conteudo,
+        idioma,
+        tipo: "aprendizado",
+        pontuacao_quiz: pontuacao,
+        criado_em: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao compartilhar aprendizado:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor." });
   }
 });
 

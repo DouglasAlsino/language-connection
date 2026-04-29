@@ -91,6 +91,9 @@ function Navbar() {
         <Link to="/chat" className={isActive("/chat") ? "active" : ""}>
           Mensagens
         </Link>
+        <Link to="/aprender" className={isActive("/aprender") ? "active" : ""}>
+          Aprender+
+        </Link>
       </nav>
 
       {/* DIREITA: sino + avatar + sair */}

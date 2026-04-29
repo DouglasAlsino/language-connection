@@ -3,6 +3,7 @@ import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import "./Community.css";
+import AprendizadoModal from "../../components/AprendizadoModal/AprendizadoModal.jsx";
 
 // Sugestões de parceiros para o painel direito (ainda mockadas, pois não temos API para isso)
 const SUGESTOES_MOCK = [
@@ -41,6 +42,8 @@ function Community() {
   const [comentarioAberto, setComentarioAberto] = useState(null);
   const [textoComentario, setTextoComentario] = useState("");
   const [likes, setLikes] = useState({});
+
+  const [postModalAberto, setPostModalAberto] = useState(null);
 
   const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
   const token = localStorage.getItem("token");
@@ -249,7 +252,20 @@ function Community() {
             </span>
           </div>
         ) : (
-          postsFiltrados.map((post) => (
+          postsFiltrados.map((post) => 
+            post.tipo === "aprendizado" ? (
+            <PostAprendizadoCard
+              key={post.id}
+              post={post}
+              likes={likes[post.id] ?? 0}
+              onLike={() => toggleLike(post.id)}
+              comentarioAberto={comentarioAberto === post.id}
+              onToggleComentario={() => toggleComentario(post.id)}
+              textoComentario={textoComentario}
+              onChangeComentario={(e) => setTextoComentario(e.target.value)}
+              onAbrirModal={() => setPostModalAberto(post)}
+            />
+          ) :(
             <PostCard
               key={post.id}
               post={post}
@@ -298,7 +314,99 @@ function Community() {
           </p>
         </div>
       </aside>
+      {postModalAberto && (
+       <AprendizadoModal
+        post={postModalAberto}
+        onFechar={() => setPostModalAberto(null)}
+      />
+      )}
     </div>
+  );
+}
+
+function PostAprendizadoCard({
+  post,
+  likes,
+  onLike,
+  comentarioAberto,
+  onToggleComentario,
+  textoComentario,
+  onChangeComentario,
+  onAbrirModal,
+}) {
+  return (
+    <article className="lc-post-card lc-post-aprendizado">
+      <div
+        className="lc-post-avatar"
+        style={{ background: "linear-gradient(135deg, #10b981, #4f46e5)" }}
+      >
+        {post.nome?.charAt(0).toUpperCase()}
+      </div>
+
+      <div className="lc-post-body">
+        <div className="lc-post-header">
+          <div>
+            <span className="lc-post-author">
+              {post.nome} {post.sobrenome}
+            </span>
+            <span className="lc-post-time">
+              {" "}·{" "}
+              {formatDistanceToNow(new Date(post.criado_em), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            </span>
+          </div>
+          <span className="lc-post-tag lc-tag-aprendizado">Aprendizado</span>
+        </div>
+
+        <h3 className="lc-post-title">{post.titulo}</h3>
+        <p className="lc-post-text">{post.conteudo}</p>
+
+        <div className="lc-aprendizado-badge">
+          <span>Idioma: {post.idioma}</span>
+          <span>Pontuação no Quiz: {post.pontuacao_quiz}%</span>
+        </div>
+
+<       button className="lc-btn-ver-aprendizado" onClick={onAbrirModal}>
+          Ver Explicação e Fazer Quiz
+        </button>
+
+        <div className="lc-post-footer">
+          <span onClick={onLike} className="lc-post-action">
+            ❤️ {likes}
+          </span>
+          <span onClick={onToggleComentario} className="lc-post-action">
+            💬 {post.comentarios || 0} comentários
+          </span>
+          <span onClick={onToggleComentario} className="lc-post-action">
+            Comentar
+          </span>
+        </div>
+
+        {comentarioAberto && (
+          <div className="lc-comment-input">
+            <div className="lc-comment-avatar">
+              {post.nome?.charAt(0).toUpperCase()}
+            </div>
+            <input
+              placeholder="Escreva um comentário..."
+              value={textoComentario}
+              onChange={onChangeComentario}
+            />
+            <button
+              onClick={() => {
+                if (textoComentario.trim()) {
+                  alert(`Comentário enviado: "${textoComentario}"`);
+                }
+              }}
+            >
+              Enviar
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 

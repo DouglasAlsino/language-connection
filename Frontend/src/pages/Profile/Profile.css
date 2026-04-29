@@ -510,3 +510,32 @@
 .lc-btn-desconectar-mini:hover {
   background: #fef2f2;
 }
+
+.lc-atividade-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.lc-atividade-icone {
+  font-size: 1.4em;
+  width: 36px;
+  text-align: center;
+}
+
+.lc-atividade-titulo {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.lc-atividade-meta {
+  font-size: 0.8em;
+  color: #94a3b8;
+  margin-top: 2px;
+}

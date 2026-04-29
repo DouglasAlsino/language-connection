@@ -16,6 +16,7 @@ import Community from "./pages/Community/Community";
 import Profile from "./pages/Profile/Profile";
 import PerfilUsuario from "./pages/PerfilUsuario/PerfilUsuario";
 import RequireAuth from "./components/RequireAuth";
+import LearningPage from "./pages/LearningPage/LearningPage";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function Content() {
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/profile/:id" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/usuarios/:id" element={<RequireAuth><PerfilUsuario /></RequireAuth>} />
+        <Route path="/aprender" element={<RequireAuth><LearningPage /></RequireAuth>} />
 
         {/* Qualquer rota desconhecida redireciona para login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
