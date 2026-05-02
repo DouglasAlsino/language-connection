@@ -45,7 +45,7 @@ function LearningPage() {
       try {
         const resSessao = await axios.post(
           "http://localhost:3000/atividades/sessao",
-          { idioma, idioma_nativo: idiomaNativo, nivel, tema: topico },
+          { idioma, idioma_nativo: idiomaNativo, nivel, tema: topico, explicacao: response.data },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setSessaoId(resSessao.data.sessao_id);
@@ -129,6 +129,7 @@ function LearningPage() {
         tema: topico,
         pontuacao: Math.round((corretas / novasPerguntas.length) * 100),
         total_questoes: novasPerguntas.length,
+        perguntas: novasPerguntas,
       },
       { headers: { Authorization: `Bearer ${token}` } }
     );

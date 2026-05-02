@@ -371,67 +371,126 @@
 }
 
 /* Card de conexões */
+/* Card externo */
 .lc-conexoes-card {
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
-  padding: 16px;
+  padding: 20px;
 }
 
 .lc-conexoes-card h3 {
   font-size: 14px;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
-/* Grid de conexões — 3 colunas */
+/* Grid de 3 colunas */
 .lc-conexoes-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
-/* Item de conexão — centralizado, com hover */
+/* Card individual de cada conexão */
 .lc-conexao-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 12px 8px;
-  border-radius: 12px;
-  border: 1px solid #f3f4f6;
+  gap: 8px;
+  padding: 20px 12px 12px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
   text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: #ffffff;
+  transition: box-shadow 0.2s;
 }
 
 .lc-conexao-item:hover {
-  background: #f9fafb;
-  border-color: #4f46e5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
+/* Avatar redondo maior */
 .lc-conexao-avatar {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Bloco de texto */
+.lc-conexao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  width: 100%;
 }
 
 .lc-conexao-nome {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lc-conexao-idioma {
-  font-size: 11px;
+  font-size: 12px;
   color: #9ca3af;
+}
+
+/* Botão desconectar — escuro, largura total */
+.lc-btn-desconectar {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 0;
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lc-btn-desconectar:hover {
+  background: #374151;
+}
+
+.lc-btn-desconectar:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Botão ver perfil — para quando está vendo o perfil de outro */
+.lc-btn-ver-perfil {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  
+  background: transparent;
+  color: #4f46e5;
+  border: 1.5px solid #4f46e5;
+  border-radius: 8px;
+}
+
+.lc-btn-ver-perfil:hover {
+  background: #dcdaff;
 }
 
 /* Card de progresso */
@@ -538,4 +597,56 @@
   font-size: 0.8em;
   color: #94a3b8;
   margin-top: 2px;
+}
+.lc-atividade-btn-ver {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #4f46e5;
+  background: transparent;
+  color: #4f46e5;
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.lc-atividade-btn-ver:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+/* Estado "solicitação pendente" */
+.lc-btn-connect.pendente {
+  background: #fef9c3;
+  color: #854d0e;
+  cursor: not-allowed;
+}
+
+/* Botão "Conectar" — muda visual quando conectado */
+.lc-btn-connect {
+  padding: 6px 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lc-btn-connect:hover { background: #4338ca; }
+
+/* Estado "já conectado" — visual diferente para feedback */
+.lc-btn-connect.conectado {
+  background: #d1fae5;
+  color: #065f46;
+}
+/* Estado "solicitação pendente" */
+.lc-btn-pendente {
+  background: #fef9c3;
+  color: #854d0e;
+  cursor: not-allowed;
 }

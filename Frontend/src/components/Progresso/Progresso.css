@@ -1,0 +1,135 @@
+.prog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.prog-vazio {
+  text-align: center;
+  padding: 48px 0;
+  color: #94a3b8;
+  font-size: 0.95em;
+}
+
+/* Resumo geral */
+.prog-resumo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.prog-resumo-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.prog-resumo-numero {
+  font-size: 2em;
+  font-weight: 700;
+  color: #4f46e5;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.prog-resumo-label {
+  font-size: 0.8em;
+  color: #64748b;
+}
+
+/* Seções */
+.prog-secao {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.prog-secao-titulo {
+  font-size: 1em;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+}
+
+/* Barras de idioma */
+.prog-idiomas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prog-idioma-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prog-idioma-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prog-idioma-nome {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.prog-idioma-meta {
+  font-size: 0.78em;
+  color: #94a3b8;
+}
+
+.prog-barra-fundo {
+  width: 100%;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.prog-barra-preenchimento {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+/* Histórico */
+.prog-historico {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prog-historico-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.prog-historico-tema {
+  font-size: 0.88em;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.prog-historico-meta {
+  font-size: 0.78em;
+  color: #94a3b8;
+}
+
+.prog-historico-nota {
+  font-size: 0.85em;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}

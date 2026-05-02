@@ -3,19 +3,17 @@ const router = express.Router();
 const db = require("../config/db");
 const authMiddleware = require("../middleware/auth");
 
-
-// Salvar sessão de aprendizado
+// POST - Salvar sessão de aprendizado
 router.post("/sessao", authMiddleware, async (req, res) => {
-  const { idioma, idioma_nativo, nivel, tema } = req.body;
+  const { idioma, idioma_nativo, nivel, tema, explicacao } = req.body;
   const usuario_id = req.usuario.id;
 
   try {
     const [result] = await db.query(
-      `INSERT INTO sessoes_aprendizado (usuario_id, idioma, idioma_nativo, nivel, tema)
-       VALUES (?, ?, ?, ?, ?)`,
-      [usuario_id, idioma, idioma_nativo, nivel, tema]
+      `INSERT INTO sessoes_aprendizado (usuario_id, idioma, idioma_nativo, nivel, tema, explicacao)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [usuario_id, idioma, idioma_nativo, nivel, tema, JSON.stringify(explicacao)]
     );
-
     res.json({ sessao_id: result.insertId });
   } catch (error) {
     console.error("Erro ao salvar sessão:", error);
@@ -23,18 +21,17 @@ router.post("/sessao", authMiddleware, async (req, res) => {
   }
 });
 
-// Salvar resultado do quiz
+// POST - Salvar resultado do quiz
 router.post("/quiz", authMiddleware, async (req, res) => {
-  const { sessao_id, idioma, tema, pontuacao, total_questoes } = req.body;
+  const { sessao_id, idioma, tema, pontuacao, total_questoes, perguntas } = req.body;
   const usuario_id = req.usuario.id;
 
   try {
     await db.query(
-      `INSERT INTO quizzes (usuario_id, sessao_id, idioma, tema, pontuacao, total_questoes)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [usuario_id, sessao_id, idioma, tema, pontuacao, total_questoes]
+      `INSERT INTO quizzes (usuario_id, sessao_id, idioma, tema, pontuacao, total_questoes, perguntas)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [usuario_id, sessao_id, idioma, tema, pontuacao, total_questoes, JSON.stringify(perguntas)]
     );
-
     res.json({ mensagem: "Quiz salvo com sucesso." });
   } catch (error) {
     console.error("Erro ao salvar quiz:", error);
@@ -42,8 +39,91 @@ router.post("/quiz", authMiddleware, async (req, res) => {
   }
 });
 
-// Buscar atividades do usuário para a aba perfil
-router.get("/:usuario_id", authMiddleware, async (req, res) => {
+// GET - Buscar detalhe de uma sessão (específica, vem antes de /:usuario_id)
+router.get("/sessao/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      `SELECT s.id, s.tema, s.idioma, s.nivel, s.criado_em, s.explicacao,
+              q.id AS quiz_id, q.pontuacao, q.total_questoes, q.perguntas
+       FROM sessoes_aprendizado s
+       LEFT JOIN quizzes q ON q.sessao_id = s.id
+       WHERE s.id = ?`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ mensagem: "Sessão não encontrada." });
+    }
+
+    const row = rows[0];
+
+    res.json({
+      id: row.id,
+      tema: row.tema,
+      idioma: row.idioma,
+      nivel: row.nivel,
+      criado_em: row.criado_em,
+      explicacao: row.explicacao ? JSON.parse(row.explicacao) : null,
+      quiz: row.perguntas
+        ? {
+            quiz_id: row.quiz_id,
+            pontuacao: row.pontuacao,
+            total_questoes: row.total_questoes,
+            perguntas: JSON.parse(row.perguntas),
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar detalhe da sessão:", error);
+    res.status(500).json({ mensagem: "Erro ao buscar detalhe." });
+  }
+});
+
+// GET - Buscar progresso do usuário (específica, vem antes de /:usuario_id)
+router.get("/progresso/:usuario_id/", authMiddleware, async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    const [[resumo]] = await db.query(
+      `SELECT
+        (SELECT COUNT(*) FROM sessoes_aprendizado WHERE usuario_id = ?) AS total_sessoes,
+        (SELECT COUNT(*) FROM quizzes WHERE usuario_id = ?) AS total_quizzes,
+        (SELECT ROUND(AVG(pontuacao), 0) FROM quizzes WHERE usuario_id = ?) AS media_geral`,
+      [usuario_id, usuario_id, usuario_id]
+    );
+
+    const [por_idioma] = await db.query(
+      `SELECT
+        idioma,
+        ROUND(AVG(pontuacao), 0) AS media,
+        COUNT(*) AS total_quizzes
+       FROM quizzes
+       WHERE usuario_id = ?
+       GROUP BY idioma
+       ORDER BY media DESC`,
+      [usuario_id]
+    );
+
+    const [historico] = await db.query(
+      `SELECT id, tema, idioma, pontuacao, total_questoes, criado_em
+       FROM quizzes
+       WHERE usuario_id = ?
+       ORDER BY criado_em DESC
+       LIMIT 10`,
+      [usuario_id]
+    );
+
+    res.json({ resumo, por_idioma, historico });
+  } catch (error) {
+    console.error("Erro ao buscar progresso:", error);
+    res.status(500).json({ mensagem: "Erro ao buscar progresso." });
+  }
+});
+
+// GET - Buscar atividades do usuário (genérica, sempre por último)
+router.get("/lista/:usuario_id", authMiddleware, async (req, res) => {
   const { usuario_id } = req.params;
 
   try {
@@ -68,7 +148,6 @@ router.get("/:usuario_id", authMiddleware, async (req, res) => {
       [usuario_id]
     );
 
-    // Une tudo e ordena do mais recente para o mais antigo
     const atividades = [...sessoes, ...quizzes, ...postsRaw].sort(
       (a, b) => new Date(b.criado_em) - new Date(a.criado_em)
     );

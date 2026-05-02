@@ -14,9 +14,10 @@ import Users from "./pages/Users/Users";
 import Chat from "./pages/Chat/Chat";
 import Community from "./pages/Community/Community";
 import Profile from "./pages/Profile/Profile";
-import PerfilUsuario from "./pages/PerfilUsuario/PerfilUsuario";
 import RequireAuth from "./components/RequireAuth";
 import LearningPage from "./pages/LearningPage/LearningPage";
+
+// PerfilUsuario removido — tudo está unificado no Profile.jsx
 
 function App() {
   return (
@@ -29,8 +30,6 @@ function App() {
 function Content() {
   const location = useLocation();
 
-  // Rotas onde a Navbar NÃO deve aparecer
-  // toLowerCase() garante que /Register e /register são tratados igual
   const rotasPublicas = ["/login", "/register"];
   const showNavbar = !rotasPublicas.includes(location.pathname.toLowerCase());
 
@@ -38,20 +37,26 @@ function Content() {
     <div>
       {showNavbar && <Navbar />}
       <Routes>
-        {/* Rotas públicas — acessíveis sem estar logado */}
+        {/* Rotas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rotas protegidas — exigem autenticação */}
+        {/* Rotas protegidas */}
         <Route path="/users" element={<RequireAuth><Users /></RequireAuth>} />
         <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
         <Route path="/community" element={<RequireAuth><Community /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-        <Route path="/profile/:id" element={<RequireAuth><Profile /></RequireAuth>} />
-        <Route path="/usuarios/:id" element={<RequireAuth><PerfilUsuario /></RequireAuth>} />
         <Route path="/aprender" element={<RequireAuth><LearningPage /></RequireAuth>} />
 
-        {/* Qualquer rota desconhecida redireciona para login */}
+        {/* Perfil próprio — sem id na URL */}
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+
+        {/* Perfil de qualquer usuário pelo id — unificado no mesmo componente */}
+        {/* /profile/:id e /usuarios/:id apontam para o mesmo Profile.jsx  */}
+        {/* O Profile.jsx usa useParams() para pegar o id e decide o que mostrar */}
+        <Route path="/profile/:id" element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route path="/usuarios/:id" element={<RequireAuth><Profile /></RequireAuth>} />
+
+        {/* Rota desconhecida */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
