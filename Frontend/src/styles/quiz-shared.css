@@ -1,0 +1,77 @@
+/* Estilos compartilhados do quiz — usados no AtividadeModal e AprendizadoModal */
+
+.quiz-question {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.quiz-question:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.question-text {
+  font-weight: 600;
+  font-size: 1em;
+  color: #111827;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #374151;
+  transition: all 0.15s;
+}
+
+.option-label:hover:not(.correct-option):not(.incorrect-option) {
+  background: #f8fafc;
+  border-color: #c7d2fe;
+}
+
+.option-label input[type="radio"] {
+  accent-color: #4f46e5;
+}
+
+.correct-option {
+  background: #d1fae5;
+  border-color: #34d399;
+}
+
+.incorrect-option {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.feedback-text {
+  margin-top: 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.correct-feedback {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+.incorrect-feedback {
+  color: #991b1b;
+  background: #fee2e2;
+}
