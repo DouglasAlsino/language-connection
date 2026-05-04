@@ -427,3 +427,5 @@ function ComentarioInput({ inicial, texto, onChange }) {
     </div>
   );
 }
+
+export default Community;

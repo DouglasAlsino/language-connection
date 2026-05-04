@@ -1,46 +1,100 @@
-/* Página principal da comunidade
-   Três colunas: sidebar esquerda, feed central, painel direito
-   padding-top compensa a Navbar fixa de 72px */
-.lc-community-page {
+/* ── Página ─────────────────────────────────────────────────────────────── */
+.comm-page {
+  min-height: 100vh;
+  background: #f0f2f7;
+  padding-top: 72px;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.comm-hero {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f0f2f7 40%, #ede9fe 100%);
+  padding: 40px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.comm-hero-badge {
+  display: inline-block;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-size: 0.78em;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.comm-hero-title {
+  font-size: 2.4em;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  max-width: 540px;
+}
+
+.comm-hero-destaque {
+  color: #4f46e5;
+}
+
+.comm-hero-sub {
+  font-size: 0.95em;
+  color: #64748b;
+  max-width: 420px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.comm-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px 32px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.comm-stat {
+  text-align: center;
+}
+
+.comm-stat-num {
+  font-size: 1.5em;
+  font-weight: 800;
+  color: #111827;
+}
+
+.comm-stat-label {
+  font-size: 0.7em;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.comm-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: #e2e8f0;
+}
+
+/* ── Grid principal ──────────────────────────────────────────────────────── */
+.comm-grid {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 280px;
   gap: 20px;
-  padding: 88px 32px 32px; /* um pouco mais de padding lateral */
-  /* remove o max-width e margin se quiser full width */
-  /* max-width: 1280px;
-     margin: 0 auto; */
-  min-height: 100vh;
-  background: #f4f6f9;
+  padding: 24px 32px 48px;
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
-/* COLUNA ESQUERDA — filtros e grupos */
-.lc-community-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  /* Fica fixa enquanto o feed scrolla */
-  position: sticky;
-  top: 88px;
-  align-self: start;
-}
-
-/* COLUNA CENTRAL — feed de posts */
-.lc-community-feed {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Título principal do feed */
-.lc-feed-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 4px;
-}
-
-/* COLUNA DIREITA — sugestões e destaques */
-.lc-community-right {
+/* ── Sidebar esquerda ────────────────────────────────────────────────────── */
+.comm-sidebar {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -49,41 +103,46 @@
   align-self: start;
 }
 
-/* Card reutilizável usado em todas as três colunas */
-.lc-comm-card {
-  background: #ffffff;
+/* ── Coluna direita ──────────────────────────────────────────────────────── */
+.comm-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 88px;
+  align-self: start;
+}
+
+/* ── Card base ───────────────────────────────────────────────────────────── */
+.comm-card {
+  background: white;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
-.lc-comm-card h2 {
-  font-size: 14px;
+.comm-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.lc-comm-card h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 10px;
-}
-
-/* Grupo de chips de filtro/idioma */
-.lc-chips {
+/* ── Chips de filtro ─────────────────────────────────────────────────────── */
+.comm-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
 }
 
-/* Chip individual de seleção */
-.lc-chip {
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  font-size: 12px;
+.comm-chip {
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8em;
   color: #4b5563;
   background: #f9fafb;
   cursor: pointer;
@@ -91,192 +150,340 @@
   user-select: none;
 }
 
-/* Chip selecionado — cor da marca */
-.lc-chip.active,
-.lc-chip:hover {
-  background: #eef2ff;
+.comm-chip.ativo,
+.comm-chip:hover {
+  background: #4f46e5;
   border-color: #4f46e5;
-  color: #4f46e5;
+  color: white;
   font-weight: 600;
 }
 
-/* Botão tracejado de "criar grupo" */
-.lc-btn-outline-dashed {
-  width: 100%;
-  margin-top: 10px;
-  padding: 7px;
-  border-radius: 999px;
-  border: 1.5px dashed #94a3b8;
-  background: transparent;
-  font-size: 12px;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
+/* ── Trends ──────────────────────────────────────────────────────────────── */
+.comm-trends {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.lc-btn-outline-dashed:hover {
-  border-color: #4f46e5;
+.comm-trend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.comm-trend-hash {
   color: #4f46e5;
+  font-weight: 700;
 }
 
-/* Card de criação de novo post */
-.lc-create-post {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  padding: 14px 16px;
+.comm-trend-tag {
+  flex: 1;
+  color: #374151;
+  font-weight: 500;
+}
+
+.comm-trend-count {
+  color: #94a3b8;
+  font-size: 0.85em;
+}
+
+/* ── Feed ────────────────────────────────────────────────────────────────── */
+.comm-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Card de criar post ──────────────────────────────────────────────────── */
+.comm-create {
   display: flex;
   gap: 12px;
+  align-items: flex-start;
 }
 
-/* Avatar redondo do autor — usado tanto no create-post quanto nos posts */
-.lc-post-avatar {
+.comm-create-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: white;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
-/* Avatar específico do usuário logado */
-.lc-avatar-me {
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-}
-
-/* Área principal de criação de post */
-.lc-create-post-main {
+.comm-create-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* Textarea do novo post — sem borda, expande conforme o conteúdo */
-.lc-post-textarea {
+.comm-create-input {
   width: 100%;
-  min-height: 64px;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: #0f172a;
-  resize: vertical;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9em;
+  color: #111827;
+  background: #f8fafc;
+  box-sizing: border-box;
   font-family: inherit;
-  background: transparent;
+  transition: border-color 0.2s;
 }
 
-.lc-post-textarea::placeholder { color: #9ca3af; }
+.comm-create-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: white;
+}
 
-/* Rodapé do create post: select + botão publicar */
-.lc-create-post-footer {
+.comm-create-textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9em;
+  color: #111827;
+  background: #f8fafc;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.comm-create-textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: white;
+}
+
+.comm-create-textarea::placeholder,
+.comm-create-input::placeholder {
+  color: #9ca3af;
+}
+
+.comm-create-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid #f3f4f6;
-  padding-top: 8px;
+  padding-top: 10px;
 }
 
-/* Select de idioma do post */
-.lc-select-lang {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  font-size: 12px;
+.comm-create-select {
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.82em;
   color: #4b5563;
   background: #f9fafb;
   cursor: pointer;
 }
 
-/* Botão primário — reutilizado em toda a plataforma */
-.lc-btn-primary {
-  padding: 7px 16px;
-  border-radius: 999px;
+.comm-btn-publicar {
+  padding: 8px 20px;
+  border-radius: 99px;
   border: none;
   background: #4f46e5;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
+  color: white;
+  font-size: 0.85em;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
-.lc-btn-publish {
-  width: auto;
+
+.comm-btn-publicar:hover {
+  background: #3b30d4;
 }
 
-.lc-btn-primary:hover { background: #4338ca; }
+/* ── Barra de tabs + busca ───────────────────────────────────────────────── */
+.comm-feed-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-/* Card de cada post do feed */
-.lc-post-card {
-  background: #ffffff;
+.comm-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.comm-tab {
+  padding: 8px 18px;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.comm-tab.ativo {
+  background: #4f46e5;
+  color: white;
+}
+
+.comm-tab:hover:not(.ativo) {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.comm-busca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 99px;
+  padding: 7px 14px;
+  font-size: 0.85em;
+  color: #9ca3af;
+}
+
+.comm-busca input {
+  border: none;
+  outline: none;
+  font-size: 0.9em;
+  color: #374151;
+  background: transparent;
+  min-width: 160px;
+}
+
+.comm-busca input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── Posts ───────────────────────────────────────────────────────────────── */
+.comm-post {
+  background: white;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
-  padding: 14px 16px;
+  padding: 16px;
   display: flex;
   gap: 12px;
   transition: box-shadow 0.2s;
 }
 
-.lc-post-card:hover {
+.comm-post:hover {
   box-shadow: 0 4px 16px rgba(79, 70, 229, 0.08);
 }
 
-/* Corpo do post (tudo exceto o avatar) */
-.lc-post-body { flex: 1; }
+.comm-post-aprendizado {
+  border-left: 4px solid #10b981;
+  background: #f0fdf4;
+}
 
-/* Cabeçalho do post — autor, tempo e tag lado a lado */
-.lc-post-header {
+.comm-post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.comm-post-body {
+  flex: 1;
+}
+
+.comm-post-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
 }
 
-.lc-post-author {
-  font-size: 14px;
-  font-weight: 600;
+.comm-post-autor {
+  font-size: 0.9em;
+  font-weight: 700;
   color: #111827;
 }
 
-.lc-post-time {
-  font-size: 12px;
+.comm-post-tempo {
+  font-size: 0.8em;
   color: #9ca3af;
 }
 
-/* Tag de idioma do post — ex: "#Inglês" */
-.lc-post-tag {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 999px;
+.comm-tag {
+  font-size: 0.72em;
+  padding: 3px 10px;
+  border-radius: 99px;
   background: #eef2ff;
   color: #4f46e5;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Texto principal do post */
-.lc-post-text {
-  font-size: 14px;
+.comm-tag-aprendizado {
+  background: #10b981;
+  color: white;
+}
+
+.comm-post-titulo {
+  font-size: 0.95em;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.comm-post-texto {
+  font-size: 0.88em;
   color: #4b5563;
   line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.comm-aprendizado-badge {
+  display: flex;
+  gap: 12px;
+  padding: 7px 12px;
+  background: #d1fae5;
+  border-radius: 8px;
+  font-size: 0.82em;
+  color: #065f46;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 
-/* Rodapé do post — likes e comentários */
-.lc-post-footer {
+.comm-btn-ver {
+  padding: 7px 16px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+
+.comm-btn-ver:hover {
+  background: #3b30d4;
+}
+
+.comm-post-footer {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 12px;
+  gap: 16px;
+  font-size: 0.8em;
   color: #9ca3af;
   border-top: 1px solid #f3f4f6;
   padding-top: 8px;
 }
 
-/* Cada ação clicável do rodapé */
-.lc-post-action {
+.comm-action {
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -284,10 +491,12 @@
   transition: color 0.2s;
 }
 
-.lc-post-action:hover { color: #4f46e5; }
+.comm-action:hover {
+  color: #4f46e5;
+}
 
-/* Área de input de comentário — aparece abaixo do post */
-.lc-comment-input {
+/* ── Comentário ──────────────────────────────────────────────────────────── */
+.comm-comentario {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -296,8 +505,7 @@
   border-top: 1px solid #f3f4f6;
 }
 
-/* Avatar menor para o campo de comentário */
-.lc-comment-avatar {
+.comm-comentario-avatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -305,213 +513,187 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 12px;
+  color: white;
+  font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
-/* Input de texto do comentário */
-.lc-comment-input input {
+.comm-comentario input {
   flex: 1;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  font-size: 13px;
-  color: #0f172a;
+  padding: 7px 14px;
+  border-radius: 99px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85em;
   background: #f9fafb;
-}
-
-.lc-comment-input input:focus {
   outline: none;
-  border-color: #4f46e5;
-  background: #ffffff;
 }
 
-.lc-comment-input input::placeholder { color: #9ca3af; }
+.comm-comentario input:focus {
+  border-color: #4f46e5;
+  background: white;
+}
 
-/* Botão de envio do comentário */
-.lc-comment-input button {
+.comm-comentario button {
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 99px;
   border: none;
   background: #eef2ff;
   color: #4f46e5;
-  font-size: 12px;
+  font-size: 0.8em;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
-.lc-comment-input button:hover { background: #4f46e5; color: #fff; }
+.comm-comentario button:hover {
+  background: #4f46e5;
+  color: white;
+}
 
-/* Mini card de usuário sugerido (coluna direita) */
-.lc-mini-user {
+/* ── Top da semana ───────────────────────────────────────────────────────── */
+.comm-top-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.comm-top-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 16px 18px;
+  font-size: 1.3em;
 }
 
-/* Avatar pequeno do usuário sugerido */
-.lc-mini-avatar {
-  width: 30px;
-  height: 30px;
+.comm-top-titulo {
+  font-size: 0.85em;
+  font-weight: 700;
+  color: white;
+}
+
+.comm-top-sub {
+  font-size: 0.72em;
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+}
+
+.comm-top-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.comm-top-item:last-child {
+  border-bottom: none;
+}
+
+.comm-top-pos {
+  font-size: 0.82em;
+  font-weight: 700;
+  color: #94a3b8;
+  width: 16px;
+  text-align: center;
+}
+
+.comm-top-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 13px;
+  color: white;
   font-weight: 700;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
-/* Info do usuário sugerido — nome e idiomas */
-.lc-mini-info {
+.comm-top-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  font-size: 12px;
 }
 
-.lc-mini-info strong {
+.comm-top-info strong {
+  font-size: 0.85em;
   color: #111827;
-  font-size: 13px;
 }
 
-.lc-mini-info span { color: #6b7280; }
-
-/* Link "Ver todos" da sugestão */
-.lc-side-link {
-  font-size: 12px;
-  color: #4f46e5;
-  cursor: pointer;
-  font-weight: 600;
-  margin-top: 4px;
-  display: inline-block;
+.comm-top-info span {
+  font-size: 0.75em;
+  color: #9ca3af;
 }
 
-/* Item de tendência (em destaque) */
-.lc-trend-item {
-  font-size: 12px;
-  color: #4b5563;
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.lc-trend-item span {
+.comm-top-xp {
+  font-size: 0.8em;
   font-weight: 700;
-  color: #4f46e5;
+  color: #f59e0b;
 }
 
-/* Estado vazio quando nenhum post existe no filtro */
-.lc-empty-state {
+/* ── Sugestão de estudo ──────────────────────────────────────────────────── */
+.comm-sugestao-texto {
+  font-size: 0.88em;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.comm-btn-iniciar {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.comm-btn-iniciar:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+/* ── Estados ─────────────────────────────────────────────────────────────── */
+.comm-loading {
   text-align: center;
-  padding: 48px 0;
   color: #94a3b8;
-  background: #ffffff;
+  padding: 40px;
+  background: white;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
 }
 
-.lc-empty-state span {
+.comm-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: #94a3b8;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.comm-empty span {
   color: #4f46e5;
   cursor: pointer;
   font-weight: 600;
   text-decoration: underline;
-  margin-top: 8px;
   display: inline-block;
+  margin-top: 8px;
 }
 
-/* Adicione isso em algum lugar no seu Community.css */
-.lc-post-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #0f172a;
-  background: #f9fafb;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.lc-post-input::placeholder {
-  color: #9ca3af;
-}
-
-.lc-post-input:focus {
-  outline: none;
-  border-color: #4f46e5;
-  background: #ffffff;
-}
-
-
-.error-message {
-  color: #e53e3e; /* Vermelho para mensagens de erro */
-  background-color: #fee2e2;
+.comm-erro {
+  background: #fee2e2;
   border: 1px solid #fca5a5;
-  border-radius: 6px;
+  color: #dc2626;
+  border-radius: 8px;
   padding: 8px 12px;
-  margin-bottom: 15px;
-  font-size: 0.9em;
-}
-
-.loading-message {
+  font-size: 0.85em;
   text-align: center;
-  color: #666;
-  padding: 20px;
-  font-size: 1.1em;
-}
-
-/* Post de Aprendizado */
-.lc-post-aprendizado {
-  border-left: 4px solid #10b981;
-  background-color: #f0fdf4;
-}
-
-.lc-tag-aprendizado {
-  background-color: #10b981;
-  color: white;
-  padding: 2px 10px;
-  border-radius: 20px;
-  font-size: 0.75em;
-  font-weight: 600;
-}
-
-.lc-aprendizado-badge {
-  display: flex;
-  gap: 15px;
-  margin: 10px 0;
-  padding: 8px 12px;
-  background-color: #d1fae5;
-  border-radius: 6px;
-  font-size: 0.9em;
-  color: #065f46;
-  font-weight: 600;
-}
-
-/* Botão de compartilhar na LearningPage */
-.share-btn {
-  margin-top: 15px;
-  background-color: #10b981;
-}
-
-.share-btn:hover:not(:disabled) {
-  background-color: #059669;
-}
-.lc-btn-ver-aprendizado {
-  margin: 10px 0;
-  padding: 8px 16px;
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.lc-btn-ver-aprendizado:hover {
-  background-color: #3b30d4;
 }
