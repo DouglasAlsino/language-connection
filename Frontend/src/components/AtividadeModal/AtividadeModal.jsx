@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./AtividadeModal.css";
+import "../../styles/quiz-shared.css";
 
 function AtividadeModal({ atividade, onFechar }) {
   const [detalhe, setDetalhe] = useState(null);

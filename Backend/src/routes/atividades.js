@@ -39,6 +39,32 @@ router.post("/quiz", authMiddleware, async (req, res) => {
   }
 });
 
+// GET - Top Aprender+ (Ranking)
+router.get("/ranking", authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT 
+        u.id,
+        u.nome,
+        u.sobrenome,
+        COUNT(DISTINCT s.id) AS total_sessoes,
+        COUNT(DISTINCT q.id) AS total_quizzes,
+        ROUND(AVG(q.pontuacao), 0) AS media_quiz
+      FROM usuarios u
+      LEFT JOIN sessoes_aprendizado s ON s.usuario_id = u.id
+      LEFT JOIN quizzes q ON q.usuario_id = u.id
+      GROUP BY u.id
+      ORDER BY (COUNT(DISTINCT s.id) + COUNT(DISTINCT q.id)) DESC
+      LIMIT 10`
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar ranking:", error);
+    res.status(500).json({ mensagem: "Erro ao buscar ranking." });
+  }
+});
+
 // GET - Buscar detalhe de uma sessão (específica, vem antes de /:usuario_id)
 router.get("/sessao/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;

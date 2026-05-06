@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./AprendizadoModal.css";
+import "../../styles/quiz-shared.css";
 
 function AprendizadoModal({ post, onFechar }) {
   const dados = post.dados_aprendizado;

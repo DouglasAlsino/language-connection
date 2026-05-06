@@ -6,42 +6,36 @@ import { temasPorIdiomaENivel } from "../../data/temasAprendizado";
 function LearningPage() {
   const [topico, setTopico] = useState("");
   const [idioma, setIdioma] = useState("Português");
-  const [idiomaNativo, setIdiomaNativo] = useState("Português"); // Idioma padrão
+  const [idiomaNativo, setIdiomaNativo] = useState("Português");
   const [nivel, setNivel] = useState("Básico");
   const [explicacaoIA, setExplicacaoIA] = useState(null);
   const [sessaoId, setSessaoId] = useState(null);
-  const [quizIA, setQuizIA] = useState(null); // Novo estado para o quiz
+  const [quizIA, setQuizIA] = useState(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [quizCorrigido, setQuizCorrigido] = useState(false); // Para saber se o quiz já foi corrigido
-  const [modoEscolhaTema, setModoEscolhaTema] = useState(null); // 'sugerir' ou 'sortear'
+  const [quizCorrigido, setQuizCorrigido] = useState(false);
+  const [modoEscolhaTema, setModoEscolhaTema] = useState(null);
   const [temaSorteado, setTemaSorteado] = useState(null);
 
   const token = localStorage.getItem("token");
+
+  // ── todas as funções permanecem exatamente iguais ──────────────────────────
 
   const handleGerarExplicacao = async (e) => {
     e.preventDefault();
     setErro("");
     setExplicacaoIA(null);
-    setQuizIA(null); // Limpa o quiz ao gerar nova explicação
+    setQuizIA(null);
     setQuizCorrigido(false);
-
-    if (!topico.trim()) {
-      setErro("Por favor, insira um tópico para aprender.");
-      return;
-    }
-
+    if (!topico.trim()) { setErro("Por favor, insira um tópico para aprender."); return; }
     setCarregando(true);
     try {
       const response = await axios.post(
         "http://localhost:3000/ia/ensinar",
         { topico, idioma, idiomaNativo, nivel },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setExplicacaoIA(response.data);
-      // Salva a sessão no banco e guarda o id para vincular ao quiz depois
       try {
         const resSessao = await axios.post(
           "http://localhost:3000/atividades/sessao",
@@ -49,362 +43,267 @@ function LearningPage() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setSessaoId(resSessao.data.sessao_id);
-      } catch (err) {
-        console.warn("Não foi possível salvar a sessão:", err);
-        // Erro silencioso — não interrompe a experiência do usuário
-      }
+      } catch (err) { console.warn("Não foi possível salvar a sessão:", err); }
     } catch (err) {
-      console.error("Erro ao gerar explicação:", err);
-      setErro("Não foi possível gerar a explicação. Tente novamente mais tarde.");
-      if (err.response && err.response.data && err.response.data.mensagem) {
-        setErro(err.response.data.mensagem);
-      }
-    } finally {
-      setCarregando(false);
-    }
+      setErro(err.response?.data?.mensagem || "Não foi possível gerar a explicação.");
+    } finally { setCarregando(false); }
   };
 
-  // Nova função para gerar o quiz
   const handleGerarQuiz = async () => {
-    setErro("");
-    setQuizIA(null); // Limpa o quiz anterior
-    setQuizCorrigido(false);
-
-    setCarregando(true);
+    setErro(""); setQuizIA(null); setQuizCorrigido(false); setCarregando(true);
     try {
       const response = await axios.post(
-        "http://localhost:3000/ia/gerar-quiz", // Nosso novo endpoint de quiz
-        {
-          topico,
-          idioma,
-          nivel,
-          explicacao: explicacaoIA ? JSON.stringify(explicacaoIA) : undefined, // Envia a explicação como string
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        "http://localhost:3000/ia/gerar-quiz",
+        { topico, idioma, nivel, explicacao: explicacaoIA ? JSON.stringify(explicacaoIA) : undefined },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setQuizIA(response.data);
     } catch (err) {
-      console.error("Erro ao gerar quiz:", err);
-      setErro("Não foi possível gerar o quiz. Tente novamente mais tarde.");
-      if (err.response && err.response.data && err.response.data.mensagem) {
-        setErro(err.response.data.mensagem);
-      }
-    } finally {
-      setCarregando(false);
-    }
+      setErro(err.response?.data?.mensagem || "Não foi possível gerar o quiz.");
+    } finally { setCarregando(false); }
   };
 
-  // Função para lidar com a resposta do usuário no quiz
   const handleRespostaQuiz = (perguntaId, resposta) => {
-    setQuizIA((prevQuiz) => {
-      const novasPerguntas = prevQuiz.perguntas.map((p) =>
+    setQuizIA((prev) => ({
+      ...prev,
+      perguntas: prev.perguntas.map((p) =>
         p.id === perguntaId ? { ...p, resposta_usuario: resposta } : p
-      );
-      return { ...prevQuiz, perguntas: novasPerguntas };
-    });
+      ),
+    }));
   };
 
-  // Função para corrigir o quiz
   const handleCorrigirQuiz = async () => {
-  // Primeiro calcula as perguntas corrigidas
-  const novasPerguntas = quizIA.perguntas.map((p) => ({
-    ...p,
-    correta: p.resposta_usuario === p.resposta_correta,
-  }));
+    const novasPerguntas = quizIA.perguntas.map((p) => ({
+      ...p, correta: p.resposta_usuario === p.resposta_correta,
+    }));
+    setQuizIA((prev) => ({ ...prev, perguntas: novasPerguntas }));
+    setQuizCorrigido(true);
+    const corretas = novasPerguntas.filter((p) => p.correta).length;
+    try {
+      await axios.post(
+        "http://localhost:3000/atividades/quiz",
+        {
+          sessao_id: sessaoId, idioma, tema: topico,
+          pontuacao: Math.round((corretas / novasPerguntas.length) * 100),
+          total_questoes: novasPerguntas.length, perguntas: novasPerguntas,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) { console.warn("Não foi possível salvar o quiz:", err); }
+  };
 
-  // Atualiza o estado com as perguntas corrigidas
-  setQuizIA((prevQuiz) => ({ ...prevQuiz, perguntas: novasPerguntas }));
-  setQuizCorrigido(true);
-
-  // Salva o resultado no banco
-  const corretas = novasPerguntas.filter((p) => p.correta).length;
-  try {
-    await axios.post(
-      "http://localhost:3000/atividades/quiz",
-      {
-        sessao_id: sessaoId,
-        idioma,
-        tema: topico,
-        pontuacao: Math.round((corretas / novasPerguntas.length) * 100),
-        total_questoes: novasPerguntas.length,
-        perguntas: novasPerguntas,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  } catch (err) {
-    console.warn("Não foi possível salvar o quiz:", err);
-  }
-};
-
-  // Calcula a pontuação
   const calcularPontuacao = () => {
     if (!quizIA || !quizCorrigido) return 0;
-    const corretas = quizIA.perguntas.filter(p => p.correta).length;
-    return (corretas / quizIA.perguntas.length) * 100;
+    return (quizIA.perguntas.filter((p) => p.correta).length / quizIA.perguntas.length) * 100;
   };
 
-  // Função para compartilhar na comunidade
   const handleCompartilhar = async () => {
     try {
       setCarregando(true);
-      const pontuacao = calcularPontuacao();
-
       await axios.post(
         "http://localhost:3000/posts/compartilhar-aprendizado",
-        {
-          topico,
-          idioma,
-          nivel,
-          pontuacao: pontuacao.toFixed(0),
-          explicacao: explicacaoIA,
-          quiz: quizIA,
-        },
-        {
-           headers: { Authorization: `Bearer ${token}` },
-        }
+        { topico, idioma, nivel, pontuacao: calcularPontuacao().toFixed(0), explicacao: explicacaoIA, quiz: quizIA },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       alert("Seu aprendizado foi compartilhado na comunidade!");
-    } catch (err) {
-      console.error("Erro ao compartilhar:", err);
-      setErro("Não foi possível compartilhar. Tente novamente.");
-    } finally {
-      setCarregando(false);
-    }
+    } catch (err) { setErro("Não foi possível compartilhar. Tente novamente."); }
+    finally { setCarregando(false); }
   };
 
   const sortearTema = () => {
-  if (!idioma || !nivel) return;
-  const temas = temasPorIdiomaENivel[idioma]?.[nivel];
-  if (!temas || temas.length === 0) return;
-  const indiceAleatorio = Math.floor(Math.random() * temas.length);
-  setTemaSorteado(temas[indiceAleatorio]);
-  setTopico(temas[indiceAleatorio]);
+    const temas = temasPorIdiomaENivel[idioma]?.[nivel];
+    if (!temas || temas.length === 0) return;
+    const tema = temas[Math.floor(Math.random() * temas.length)];
+    setTemaSorteado(tema);
+    setTopico(tema);
   };
 
+  // Dados dos níveis com descrição para os cards
+  const niveis = [
+    { valor: "Básico", descricao: "Primeiros passos" },
+    { valor: "Intermediário", descricao: "Conversação fluida" },
+    { valor: "Avançado", descricao: "Domínio refinado" },
+  ];
+
+  // ── JSX novo ───────────────────────────────────────────────────────────────
+
   return (
-    <div className="learning-page-container">
-      <h1 className="learning-title">Aprendizado com IA</h1>
-      <p className="learning-subtitle">
-        Explore tópicos gramaticais e de vocabulário com explicações personalizadas.
-      </p>
+    <div className="lp-page">
 
-      <div className="learning-form-card">
-        <h2>Gerar Nova Explicação</h2>
+      {/* Hero com gradiente */}
+      <div className="lp-hero">
+        <h1 className="lp-hero-title">
+          Aprendizado com <span className="lp-hero-destaque">IA</span>
+        </h1>
+        <p className="lp-hero-sub">
+          Explore tópicos gramaticais e de vocabulário com explicações personalizadas para o seu nível.
+        </p>
+      </div>
+
+      {/* Card principal do formulário */}
+      <div className="lp-card">
+
+        {/* Cabeçalho do card */}
+        <div className="lp-card-header">
+          <div className="lp-card-icon">✏️</div>
+          <div>
+            <div className="lp-card-titulo">Gerar Nova Explicação</div>
+            <div className="lp-card-sub">Configure as opções abaixo para personalizar.</div>
+          </div>
+        </div>
+
         <form onSubmit={handleGerarExplicacao}>
-          {erro && <p className="error-message">{erro}</p>}
+          {erro && <p className="lp-erro">{erro}</p>}
 
-
-          <div className="form-group">
-            <label htmlFor="idioma">Idioma:</label>
-            <select
-              id="idioma"
-              value={idioma}
-              onChange={(e) => setIdioma(e.target.value)}
-              className="learning-select"
-            >
-              <option value="Português">Português</option>
-              <option value="Inglês">Inglês</option>
-              <option value="Espanhol">Espanhol</option>
-              <option value="Francês">Francês</option>
-              <option value="Alemão">Alemão</option>
-              <option value="Japonês">Japonês</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="idiomaNativo">Idioma Nativo:</label>
-            <select
-              id="idioma"
-              value={idiomaNativo}
-              onChange={(e) => setIdiomaNativo(e.target.value)}
-              className="learning-select"
-            >
-              <option value="Português">Português</option>
-              <option value="Inglês">Inglês</option>
-              <option value="Espanhol">Espanhol</option>
-              <option value="Francês">Francês</option>
-              <option value="Alemão">Alemão</option>
-              <option value="Japonês">Japonês</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="nivel">Nível:</label>
-            <select
-              id="nivel"
-              value={nivel}
-              onChange={(e) => setNivel(e.target.value)}
-              className="learning-select"
-            >
-              <option value="Básico">Básico</option>
-              <option value="Intermediário">Intermediário</option>
-              <option value="Avançado">Avançado</option>
-            </select>
-          </div>
-
-          {/* Escolha do modo de seleção de tema */}
-          {!modoEscolhaTema && (
-            <div className="lp-modo-tema">
-              <p>Como você quer escolher o tema?</p>
-              <div className="lp-modo-btns">
-                <button
-                  type="button"
-                  className="lp-btn-modo"
-                  onClick={() => {
-                    setModoEscolhaTema("sugerir");
-                    setTemaSorteado(null);
-                    setTopico("");
-                  }}
-                >
-                  Quero sugerir um tema
-                </button>
-                <button
-                  type="button"
-                  className="lp-btn-modo lp-btn-modo-sortear"
-                  onClick={() => {
-                    setModoEscolhaTema("sortear");
-                    setTemaSorteado(null);
-                    setTopico("");
-                  }}
-                >
-                  Me sugira um tema
-                </button>
-              </div>
+          {/* Idioma e Idioma Nativo lado a lado */}
+          <div className="lp-selects-grid">
+            <div className="lp-field">
+              <label className="lp-label">
+                <span className="lp-label-icon">✦</span> Idioma que quer aprender
+              </label>
+              <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className="lp-select">
+                <option>Português</option>
+                <option>Inglês</option>
+                <option>Espanhol</option>
+                <option>Francês</option>
+                <option>Alemão</option>
+                <option>Japonês</option>
+              </select>
             </div>
-          )}
+            <div className="lp-field">
+              <label className="lp-label">
+                <span className="lp-label-icon">✦</span> Idioma que quer ler a lição
+              </label>
+              <select value={idiomaNativo} onChange={(e) => setIdiomaNativo(e.target.value)} className="lp-select">
+                <option>Português</option>
+                <option>Inglês</option>
+                <option>Espanhol</option>
+                <option>Francês</option>
+                <option>Alemão</option>
+                <option>Japonês</option>
+              </select>
+            </div>
+          </div>
 
-          {/* Modo: usuário sugere o tema */}
-          {modoEscolhaTema === "sugerir" && (
-            <div className="lp-campo-tema">
-              <label>Tema que você quer aprender:</label>
-              <input
-                type="text"
-                placeholder="Ex: Present Perfect, Vocabulário de viagens..."
-                value={topico}
-                onChange={(e) => setTopico(e.target.value)}
-                className="lp-input-tema"
-              />
+          {/* Nível como cards clicáveis */}
+          <div className="lp-field">
+            <label className="lp-label">
+              <span className="lp-label-icon">🎓</span> Nível
+            </label>
+            <div className="lp-niveis-grid">
+              {niveis.map((n) => (
+                <div
+                  key={n.valor}
+                  className={`lp-nivel-card ${nivel === n.valor ? "ativo" : ""}`}
+                  onClick={() => setNivel(n.valor)}
+                >
+                  <div className="lp-nivel-nome">{n.valor}</div>
+                  <div className="lp-nivel-desc">{n.descricao}</div>
+                  <div className={`lp-nivel-dot ${nivel === n.valor ? "ativo" : ""}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Escolha do modo de tema */}
+          <div className="lp-field">
+            <label className="lp-label">
+              <span className="lp-label-icon">💡</span> Como você quer escolher o tema?
+            </label>
+
+            {/* Botões pill de modo */}
+            <div className="lp-modo-pills">
               <button
                 type="button"
-                className="lp-btn-voltar"
-                onClick={() => setModoEscolhaTema(null)}
+                className={`lp-pill ${modoEscolhaTema === "sugerir" ? "ativo" : ""}`}
+                onClick={() => { setModoEscolhaTema("sugerir"); setTemaSorteado(null); setTopico(""); }}
               >
-                ← Voltar
+                Quero sugerir um tema
+              </button>
+              <button
+                type="button"
+                className={`lp-pill ${modoEscolhaTema === "sortear" ? "ativo" : ""}`}
+                onClick={() => { setModoEscolhaTema("sortear"); setTemaSorteado(null); setTopico(""); }}
+              >
+                Me sugira um tema
               </button>
             </div>
-          )}
 
-          {/* Modo: sortear tema */}
-          {modoEscolhaTema === "sortear" && (
-            <div className="lp-campo-tema">
-              {temaSorteado ? (
-                <div className="lp-tema-sorteado">
-                  <p>Tema sorteado:</p>
-                  <strong>{temaSorteado}</strong>
-                  <div className="lp-tema-sorteado-btns">
-                    <button
-                      type="button"
-                      className="lp-btn-novo-sorteio"
-                      onClick={sortearTema}
-                    >
+            {/* Campo de input quando usuário quer sugerir */}
+            {modoEscolhaTema === "sugerir" && (
+              <input
+                type="text"
+                placeholder="Ex.: tempos verbais no passado, pronomes pessoais..."
+                value={topico}
+                onChange={(e) => setTopico(e.target.value)}
+                className="lp-input"
+              />
+            )}
+
+            {/* Área de sorteio */}
+            {modoEscolhaTema === "sortear" && (
+              <div className="lp-sortear-area">
+                {temaSorteado ? (
+                  <div className="lp-tema-sorteado">
+                    <p>Tema sorteado:</p>
+                    <strong>{temaSorteado}</strong>
+                    <button type="button" className="lp-pill ativo" onClick={sortearTema}>
                       Sortear outro
                     </button>
-                    <button
-                      type="button"
-                      className="lp-btn-voltar"
-                      onClick={() => {
-                        setModoEscolhaTema(null);
-                        setTemaSorteado(null);
-                        setTopico("");
-                      }}
-                    >
-                      ← Voltar
-                    </button>
                   </div>
-                </div>
-              ) : (
-                <div className="lp-sortear-vazio">
-                  <p>Clique para sortear um tema de acordo com seu nível:</p>
+                ) : (
                   <button
                     type="button"
-                    className="lp-btn-sortear"
+                    className="lp-pill ativo"
                     onClick={sortearTema}
                     disabled={!idioma || !nivel}
                   >
                     Sortear tema
                   </button>
-                  <button
-                    type="button"
-                    className="lp-btn-voltar"
-                    onClick={() => setModoEscolhaTema(null)}
-                  >
-                    ← Voltar
-                  </button>
-                  {(!idioma || !nivel) && (
-                    <p className="lp-aviso-sortear">
-                      Selecione o idioma e o nível antes de sortear.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
 
-          <button type="submit" className="learning-submit-btn" disabled={carregando}>
+          <button type="submit" className="lp-btn-submit" disabled={carregando}>
             {carregando ? "Gerando..." : "Gerar Explicação"}
           </button>
         </form>
       </div>
 
-      {/* Área para exibir a explicação da IA */}
+      {/* Card de explicação */}
       {explicacaoIA && (
-        <div className="ia-explanation-card">
-          <h3>{explicacaoIA.titulo}</h3>
+        <div className="lp-card lp-resultado-card">
+          <h3 className="lp-resultado-titulo">{explicacaoIA.titulo}</h3>
           <p><strong>Introdução:</strong> {explicacaoIA.introducao}</p>
           <p><strong>Regras:</strong> {explicacaoIA.regras}</p>
-          <h4>Exemplos:</h4>
-          <ul>
-            {explicacaoIA.exemplos && explicacaoIA.exemplos.map((ex, index) => (
-              <li key={index}>{ex}</li>
-            ))}
+          <h4 className="lp-secao-titulo">Exemplos</h4>
+          <ul className="lp-lista">
+            {explicacaoIA.exemplos?.map((ex, i) => <li key={i}>{ex}</li>)}
           </ul>
-          <h4>Exercício de Fixação:</h4>
-          <ol>
-            {explicacaoIA.exercicio && explicacaoIA.exercicio.map((ex, index) => (
-              <li key={index}>{ex}</li>
-            ))}
+          <h4 className="lp-secao-titulo">Exercício de Fixação</h4>
+          <ol className="lp-lista">
+            {explicacaoIA.exercicio?.map((ex, i) => <li key={i}>{ex}</li>)}
           </ol>
           <p><strong>Resumo:</strong> {explicacaoIA.resumo}</p>
-
-          <button
-            onClick={handleGerarQuiz}
-            className="learning-submit-btn generate-quiz-btn"
-            disabled={carregando}
-          >
+          <button onClick={handleGerarQuiz} className="lp-btn-submit lp-btn-verde" disabled={carregando}>
             {carregando ? "Gerando Quiz..." : "Gerar Quiz"}
           </button>
         </div>
       )}
 
-      {/* Área para exibir o quiz da IA */}
+      {/* Card do quiz */}
       {quizIA && (
-        <div className="ia-quiz-card">
-          <h3>{quizIA.titulo_quiz}</h3>
+        <div className="lp-card">
+          <h3 className="lp-resultado-titulo">{quizIA.titulo_quiz}</h3>
           {quizIA.perguntas.map((pergunta) => (
-            <div key={pergunta.id} className="quiz-question">
-              <p className="question-text">{pergunta.id}. {pergunta.pergunta}</p>
-              <div className="options-container">
+            <div key={pergunta.id} className="lp-quiz-pergunta">
+              <p className="lp-quiz-enunciado">{pergunta.id}. {pergunta.pergunta}</p>
+              <div className="lp-opcoes">
                 {Object.entries(pergunta.opcoes).map(([key, value]) => (
                   <label
                     key={key}
-                    className={`option-label ${
-                      quizCorrigido && pergunta.resposta_correta === key ? 'correct-option' : ''
-                    } ${
-                      quizCorrigido && pergunta.resposta_usuario === key && pergunta.resposta_usuario !== pergunta.resposta_correta ? 'incorrect-option' : ''
-                    }`}
+                    className={`lp-opcao ${quizCorrigido && pergunta.resposta_correta === key ? "correta" : ""} ${quizCorrigido && pergunta.resposta_usuario === key && pergunta.resposta_usuario !== pergunta.resposta_correta ? "errada" : ""}`}
                   >
                     <input
                       type="radio"
@@ -419,35 +318,34 @@ function LearningPage() {
                 ))}
               </div>
               {quizCorrigido && (
-                <p className={`feedback-text ${pergunta.correta ? 'correct-feedback' : 'incorrect-feedback'}`}>
-                  {pergunta.correta ? "Correto!" : `Incorreto. A resposta correta era: ${pergunta.resposta_correta}) ${pergunta.opcoes[pergunta.resposta_correta]}`}
+                <p className={`lp-feedback ${pergunta.correta ? "certo" : "errado"}`}>
+                  {pergunta.correta ? "Correto!" : `Incorreto. Resposta: ${pergunta.resposta_correta}) ${pergunta.opcoes[pergunta.resposta_correta]}`}
                 </p>
               )}
             </div>
           ))}
+
           {!quizCorrigido && (
             <button
               onClick={handleCorrigirQuiz}
-              className="learning-submit-btn correct-quiz-btn"
-              disabled={carregando || quizIA.perguntas.some(p => !p.resposta_usuario)} // Desabilita se nem todas as perguntas foram respondidas
+              className="lp-btn-submit"
+              disabled={carregando || quizIA.perguntas.some((p) => !p.resposta_usuario)}
             >
               Corrigir Quiz
             </button>
           )}
+
           {quizCorrigido && (
-            <div className="quiz-score">
+            <div className="lp-pontuacao">
               <h4>Sua Pontuação: {calcularPontuacao().toFixed(0)}%</h4>
-              <button
-                onClick={handleCompartilhar}
-                className="learning-submit-btn share-btn"
-                disabled={carregando}
-              >
+              <button onClick={handleCompartilhar} className="lp-btn-submit" disabled={carregando}>
                 {carregando ? "Compartilhando..." : "Compartilhar na Comunidade"}
               </button>
             </div>
           )}
         </div>
       )}
+
     </div>
   );
 }
