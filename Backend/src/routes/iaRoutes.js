@@ -17,43 +17,55 @@ if (!topico || !idioma || !idiomaNativo || !nivel) {
 }
 
 // Constrói o prompt para a IA
-const prompt = `Você é um professor de idiomas experiente, extremamente didático, paciente e encorajador. Sua missão é desmistificar tópicos complexos de idiomas, tornando-os acessíveis a qualquer aluno.
+const prompt = `You are an expert language teacher. Your task is to generate a language learning explanation strictly following these rules. Do not deviate.
 
-Sua tarefa é gerar uma explicação completa e fácil de assimilar sobre o tópico de idioma "${topico}", use analogias para facilitar o entendimento para o aluno.
+## TOPIC
+The student wants to learn about: "${topico}"
 
-A explicação principal deve ser redigida inteiramente no idioma nativo do aluno, que é "${idiomaNativo}".
+## LANGUAGE CONFIGURATION
+- Native language of the student (use this for ALL explanations, rules, introduction, summary): ${idiomaNativo}
+- Target language the student is learning (use this for ALL examples, exercises and phonetics): ${idioma}
+- Student proficiency level: ${nivel}
 
-No entanto, todos os exemplos práticos e o exercício de fixação devem ser apresentados no idioma que o aluno está aprendendo, que é "${idioma}", e todos os exemplos que usar use transição fonetica e Pronúncia Figurada/Escrita Fonética para que a pessoa aprenda a pronuncia tambem.
+${idiomaNativo === idioma ? `## IMPORTANT EDGE CASE
+The native language and target language are the same (${idioma}). In this case:
+- Write ALL fields (titulo, introducao, regras, resumo) in ${idiomaNativo}
+- Write ALL examples and exercises also in ${idioma}
+- Do NOT switch to any other language under any circumstance` : ''}
 
-Adapte todo o conteúdo, a linguagem e a complexidade dos exemplos para um aluno de nível "${nivel}". Os exemplos devem ser curtos, claros e diretamente relacionados ao tópico.
+## STRICT LANGUAGE RULES — FOLLOW EXACTLY
+- "titulo" field → MUST be written in ${idiomaNativo}
+- "introducao" field → MUST be written in ${idiomaNativo}
+- "regras" field → MUST be written in ${idiomaNativo}
+- "resumo" field → MUST be written in ${idiomaNativo}
+- "exemplos" array → MUST be written in ${idioma}. Each example MUST include phonetic transcription and pronunciation guide
+- "exercicio" array → MUST be written in ${idioma}. Questions only, no answers
 
-A explicação deve obrigatoriamente incluir os seguintes elementos, nesta ordem:
+## CONTENT REQUIREMENTS
+- Adapt complexity to level: ${nivel}
+- Use analogies to explain abstract concepts
+- Minimum 3 examples, each showing real usage of "${topico}"
+- Phonetic guide format for each example: [original sentence] — Pronunciation: [phonetic spelling]
+- Exercise: 2 questions that test practical application, no answers provided
 
-1.  **Título:** Um título claro e objetivo para a explicação.
-2.  **Introdução:** Uma breve e envolvente introdução que contextualize o tópico e sua importância.
-3.  **Regras Principais e Exceções:** Uma seção detalhada que aborde as regras gramaticais ou de uso do tópico, incluindo quaisquer exceções relevantes de forma clara.
-4.  **Exemplos Práticos:** Pelo menos 3 (três) exemplos práticos e simples, cada um demonstrando o uso do tópico no idioma "${idioma}".
-5.  **Exercício de Fixação:** Um pequeno exercício com 2 (duas) perguntas diretas, sem fornecer as respostas. As perguntas devem ser no idioma "${idioma}" e focadas na aplicação do tópico.
-6.  **Resumo Conciso:** Um parágrafo final que sintetize os pontos-chave da explicação.
-
-Formate a resposta estritamente como um objeto JSON, utilizando as seguintes chaves e garantindo que o conteúdo de cada chave esteja em formato de string (exceto 'exemplos' e 'exercicio' que são arrays de strings):
+## OUTPUT FORMAT
+Respond ONLY with a valid JSON object. No text before or after. Use this exact structure:
 
 {
-  "titulo": "Título da Explicação (no idioma nativo)",
-  "introducao": "Texto da introdução (no idioma nativo)",
-  "regras": "Texto das regras e exceções (no idioma nativo)",
+  "titulo": "string in ${idiomaNativo}",
+  "introducao": "string in ${idiomaNativo}",
+  "regras": "string in ${idiomaNativo}",
   "exemplos": [
-    "Exemplo 1 (no idioma que o aluno está aprendendo)",
-    "Exemplo 2 (no idioma que o aluno está aprendendo)",
-    "Exemplo 3 (no idioma que o aluno está aprendendo)"
+    "string in ${idioma} with phonetics",
+    "string in ${idioma} with phonetics",
+    "string in ${idioma} with phonetics"
   ],
   "exercicio": [
-    "Pergunta 1 (no idioma que o aluno está aprendendo)",
-    "Pergunta 2 (no idioma que o aluno está aprendendo)"
+    "string in ${idioma}",
+    "string in ${idioma}"
   ],
-  "resumo": "Texto do resumo (no idioma nativo)"
-}
-`;
+  "resumo": "string in ${idiomaNativo}"
+}`;
 // Faz a chamada à API da Groq
 const chatCompletion = await groq.chat.completions.create({
   messages: [
@@ -62,9 +74,9 @@ const chatCompletion = await groq.chat.completions.create({
       content: prompt,
     },
   ],
-  model: "llama-3.1-8b-instant", // Usamos o modelo que funcionou no teste
-  temperature: 0.7, // Controla a criatividade (0.0 a 1.0)
-  max_tokens: 1500, // Limite de tokens para a resposta
+  model: "llama-3.3-70b-versatile", // Usamos o modelo que funcionou no teste
+  temperature: 0.4, // Controla a criatividade (0.0 a 1.0)
+  max_tokens: 2500, // Limite de tokens para a resposta
   response_format: { type: "json_object" }, // Pede para a IA retornar JSON
 });
 
@@ -93,62 +105,81 @@ res.json(parsedResponse); // Retorna a explicação formatada
 // ─── Rota para gerar Quiz com IA ──────────────────
 router.post("/gerar-quiz", authMiddleware, async (req, res) => {
   try {
-    const { topico, idioma, nivel, explicacao } = req.body; // 'explicacao' é opcional
+    const { topico, idioma, nivel, explicacao } = req.body;
 
     if (!topico || !idioma || !nivel) {
       return res.status(400).json({ mensagem: "Tópico, idioma e nível são obrigatórios para gerar o quiz." });
     }
 
-    let prompt = `Você é um professor de idiomas e está criando um quiz.
-    Gere um quiz de múltipla escolha com 3 perguntas sobre o tópico "${topico}" no idioma "${idioma}",
-    adaptado para um aluno de nível "${nivel}".
-    Cada pergunta deve ter 4 opções de resposta (A, B, C, D), onde apenas uma é correta.
-    Inclua também a resposta correta para cada pergunta.`;
+    const prompt = `You are an expert language teacher creating a multiple choice quiz. Follow these rules strictly. Do not deviate.
 
-    if (explicacao) {
-      prompt += `\nConsidere a seguinte explicação para basear as perguntas do quiz:\n${explicacao}`;
-    }
+## QUIZ CONFIGURATION
+- Topic: "${topico}"
+- Language of the quiz questions and all answer options: ${idioma}
+- Student proficiency level: ${nivel}
+${explicacao ? `- Base the questions on this explanation the student already received:\n${explicacao}` : ""}
 
-    prompt += `\nFormate a resposta em JSON com a seguinte estrutura:
+## STRICT LANGUAGE RULES — FOLLOW EXACTLY
+- "titulo_quiz" field → MUST be written in ${idioma}
+- "pergunta" field in each question → MUST be written in ${idioma}
+- All values inside "opcoes" (A, B, C, D) → MUST be written in ${idioma}
+- "resposta_correta" field → MUST be only the letter: A, B, C or D
+
+## CONTENT REQUIREMENTS
+- Generate exactly 3 questions
+- Each question must have exactly 4 options: A, B, C and D
+- Only one option is correct per question
+- Adapt difficulty to level: ${nivel}
+- Questions must test practical usage of "${topico}", not just definitions
+- Do NOT include explanations or answers in the options, keep options concise
+
+## OUTPUT FORMAT
+Respond ONLY with a valid JSON object. No text before or after. No comments inside the JSON. Use this exact structure:
+
+{
+  "titulo_quiz": "string in ${idioma}",
+  "perguntas": [
     {
-      "titulo_quiz": "Quiz sobre [Tópico]",
-      "perguntas": [
-        {
-          "id": 1,
-          "pergunta": "Texto da pergunta 1?",
-          "opcoes": {
-            "A": "Opção A",
-            "B": "Opção B",
-            "C": "Opção C",
-            "D": "Opção D"
-          },
-          "resposta_correta": "A"
-        },
-        {
-          "id": 2,
-          "pergunta": "Texto da pergunta 2?",
-          "opcoes": {
-            "A": "Opção A",
-            "B": "Opção B",
-            "C": "Opção C",
-            "D": "Opção D"
-          },
-          "resposta_correta": "B"
-        }
-        // ... mais perguntas
-      ]
-    }`;
+      "id": 1,
+      "pergunta": "string in ${idioma}",
+      "opcoes": {
+        "A": "string in ${idioma}",
+        "B": "string in ${idioma}",
+        "C": "string in ${idioma}",
+        "D": "string in ${idioma}"
+      },
+      "resposta_correta": "A"
+    },
+    {
+      "id": 2,
+      "pergunta": "string in ${idioma}",
+      "opcoes": {
+        "A": "string in ${idioma}",
+        "B": "string in ${idioma}",
+        "C": "string in ${idioma}",
+        "D": "string in ${idioma}"
+      },
+      "resposta_correta": "B"
+    },
+    {
+      "id": 3,
+      "pergunta": "string in ${idioma}",
+      "opcoes": {
+        "A": "string in ${idioma}",
+        "B": "string in ${idioma}",
+        "C": "string in ${idioma}",
+        "D": "string in ${idioma}"
+      },
+      "resposta_correta": "C"
+    }
+  ]
+}`;
 
     const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.1-8b-instant",
-      temperature: 0.8, // Um pouco mais de criatividade para o quiz
-      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile", // mesmo modelo do ensinar, mais confiável
+      temperature: 0.4,  // baixo para garantir estrutura JSON correta
+      max_tokens: 1500,  // suficiente para 3 perguntas completas
       response_format: { type: "json_object" },
     });
 
@@ -162,9 +193,9 @@ router.post("/gerar-quiz", authMiddleware, async (req, res) => {
     try {
       parsedResponse = JSON.parse(iaResponseContent);
     } catch (jsonError) {
-      console.error("Erro ao fazer parse do JSON do quiz da IA:", jsonError);
-      console.error("Conteúdo bruto da IA:", iaResponseContent);
-      return res.status(500).json({ mensagem: "A IA retornou um formato inválido para o quiz.", raw: iaResponseContent });
+      console.error("Erro ao fazer parse do JSON do quiz:", jsonError);
+      console.error("Conteúdo bruto:", iaResponseContent);
+      return res.status(500).json({ mensagem: "A IA retornou um formato inválido.", raw: iaResponseContent });
     }
 
     // Adiciona um campo para as respostas do usuário e status de correção

@@ -5,18 +5,14 @@ import { ptBR } from "date-fns/locale";
 import "./Community.css";
 import AprendizadoModal from "../../components/AprendizadoModal/AprendizadoModal.jsx";
 
-const SUGESTOES_MOCK = [
-  { id: 1, nome: "Marina S.", inicial: "M", cor: "#8B5CF6", xp: 2840, posicao: 1 },
-  { id: 2, nome: "Lucas P.",  inicial: "L", cor: "#06B6D4", xp: 2510, posicao: 2 },
-  { id: 3, nome: "Ana R.",    inicial: "A", cor: "#10b981", xp: 2104, posicao: 3 },
-];
-
 const TRENDS = [
   { tag: "FuturoSimples", count: 124 },
   { tag: "DicaDoDia",     count: 98  },
   { tag: "Kanji",         count: 76  },
   { tag: "Pronúncia",     count: 54  },
 ];
+
+const CORES_AVATAR = ["#8B5CF6", "#06B6D4", "#10b981", "#F59E0B", "#EF4444"];
 
 function Community() {
   const [posts, setPosts] = useState([]);
@@ -30,7 +26,8 @@ function Community() {
   const [busca, setBusca] = useState("");
   const [comentarioAberto, setComentarioAberto] = useState(null);
   const [textoComentario, setTextoComentario] = useState("");
-  const [likes, setLikes] = useState({});
+  const [comentariosPost, setComentariosPost] = useState({});
+  const [topUsers, setTopUsers] = useState([]);
   const [postModalAberto, setPostModalAberto] = useState(null);
 
   const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
@@ -39,15 +36,15 @@ function Community() {
   const buscarPosts = async () => {
     setErro("");
     try {
-      const response = await axios.get("http://localhost:3000/posts", {
+      const url = abaAtiva === "seguindo" 
+        ? "http://localhost:3000/posts?filtro=seguindo" 
+        : "http://localhost:3000/posts";
+        
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (JSON.stringify(response.data) !== JSON.stringify(posts)) {
         setPosts(response.data);
-        const initialLikes = response.data.reduce(
-          (acc, post) => ({ ...acc, [post.id]: 0 }), {}
-        );
-        setLikes(initialLikes);
       }
     } catch (err) {
       setErro("Não foi possível carregar os posts.");
@@ -56,11 +53,23 @@ function Community() {
     }
   };
 
+  const buscarRanking = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/atividades/ranking", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTopUsers(response.data);
+    } catch(err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     buscarPosts();
+    buscarRanking();
     const intervalo = setInterval(buscarPosts, 15000);
     return () => clearInterval(intervalo);
-  }, []);
+  }, [abaAtiva]);
 
   const criarPost = async (e) => {
     e.preventDefault();
@@ -70,36 +79,78 @@ function Community() {
       return;
     }
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:3000/posts",
         { titulo: novoPostTitulo, conteudo: novoPostConteudo, idioma: novoPostIdioma },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPosts((prev) => [
-        { ...response.data.post, nome: usuarioLogado.nome, sobrenome: usuarioLogado.sobrenome },
-        ...prev,
-      ]);
       setNovoPostTitulo("");
       setNovoPostConteudo("");
       setNovoPostIdioma("");
-      setLikes((prev) => ({ ...prev, [response.data.post.id]: 0 }));
+      buscarPosts(); // Refresh to get the new post with all joins
     } catch (err) {
       setErro("Não foi possível criar o post.");
     }
   };
 
-  const toggleLike = (postId) => {
-    setLikes((prev) => ({ ...prev, [postId]: prev[postId] === 0 ? 1 : 0 }));
+  const toggleLike = async (postId, curtiu) => {
+    try {
+      if (curtiu) {
+        await axios.delete(`http://localhost:3000/posts/${postId}/like`, { headers: { Authorization: `Bearer ${token}` } });
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, curtiu: false, total_likes: p.total_likes - 1 } : p));
+      } else {
+        await axios.post(`http://localhost:3000/posts/${postId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, curtiu: true, total_likes: p.total_likes + 1 } : p));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const buscarComentarios = async (postId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/posts/${postId}/comentarios`, { headers: { Authorization: `Bearer ${token}` } });
+      setComentariosPost(prev => ({ ...prev, [postId]: response.data }));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const toggleComentario = (postId) => {
-    setComentarioAberto((prev) => (prev === postId ? null : postId));
-    setTextoComentario("");
+    if (comentarioAberto === postId) {
+      setComentarioAberto(null);
+    } else {
+      setComentarioAberto(postId);
+      setTextoComentario("");
+      buscarComentarios(postId);
+    }
+  };
+
+  const enviarComentario = async (postId) => {
+    if (!textoComentario.trim()) return;
+    try {
+      await axios.post(
+        `http://localhost:3000/posts/${postId}/comentarios`, 
+        { conteudo: textoComentario }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTextoComentario("");
+      buscarComentarios(postId);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, total_comentarios: p.total_comentarios + 1 } : p));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const postsFiltrados = posts
     .filter((p) => filtroAtivo === "Todos" || p.idioma?.toLowerCase().includes(filtroAtivo.toLowerCase()))
-    .filter((p) => !busca.trim() || p.titulo?.toLowerCase().includes(busca.toLowerCase()) || p.conteudo?.toLowerCase().includes(busca.toLowerCase()));
+    .filter((p) => !busca.trim() || p.titulo?.toLowerCase().includes(busca.toLowerCase()) || p.conteudo?.toLowerCase().includes(busca.toLowerCase()))
+    .sort((a, b) => {
+      if (abaAtiva === "populares") {
+        return (b.total_likes + b.total_comentarios) - (a.total_likes + a.total_comentarios);
+      }
+      return 0; // "recentes" e "seguindo" já vem ordenado do backend por criado_em DESC
+    });
 
   const filtros = ["Todos", "Português", "Inglês", "Espanhol", "Francês", "Alemão", "Japonês"];
 
@@ -261,24 +312,26 @@ function Community() {
                 <PostAprendizadoCard
                   key={post.id}
                   post={post}
-                  likes={likes[post.id] ?? 0}
-                  onLike={() => toggleLike(post.id)}
+                  onLike={() => toggleLike(post.id, post.curtiu)}
                   comentarioAberto={comentarioAberto === post.id}
                   onToggleComentario={() => toggleComentario(post.id)}
                   textoComentario={textoComentario}
                   onChangeComentario={(e) => setTextoComentario(e.target.value)}
+                  onEnviarComentario={() => enviarComentario(post.id)}
+                  comentariosLista={comentariosPost[post.id] || []}
                   onAbrirModal={() => setPostModalAberto(post)}
                 />
               ) : (
                 <PostCard
                   key={post.id}
                   post={post}
-                  likes={likes[post.id] ?? 0}
-                  onLike={() => toggleLike(post.id)}
+                  onLike={() => toggleLike(post.id, post.curtiu)}
                   comentarioAberto={comentarioAberto === post.id}
                   onToggleComentario={() => toggleComentario(post.id)}
                   textoComentario={textoComentario}
                   onChangeComentario={(e) => setTextoComentario(e.target.value)}
+                  onEnviarComentario={() => enviarComentario(post.id)}
+                  comentariosLista={comentariosPost[post.id] || []}
                 />
               )
             )
@@ -288,28 +341,32 @@ function Community() {
         {/* COLUNA DIREITA */}
         <aside className="comm-right">
 
-          {/* Top da semana */}
+          {/* Top Aprender+ */}
           <div className="comm-card comm-top-card">
             <div className="comm-top-header">
               <span>🏆</span>
               <div>
-                <div className="comm-top-titulo">Top da semana</div>
+                <div className="comm-top-titulo">Top Aprender+</div>
                 <div className="comm-top-sub">Os aprendizes mais ativos</div>
               </div>
             </div>
-            {SUGESTOES_MOCK.map((s) => (
-              <div key={s.id} className="comm-top-item">
-                <span className="comm-top-pos">{s.posicao}</span>
-                <div className="comm-top-avatar" style={{ background: s.cor }}>
-                  {s.inicial}
+            {topUsers.length === 0 ? (
+              <p style={{ padding: "0 1rem", fontSize: "0.85rem", color: "#6b7280" }}>Sem dados no momento.</p>
+            ) : (
+              topUsers.map((s, idx) => (
+                <div key={s.id} className="comm-top-item">
+                  <span className="comm-top-pos">{idx + 1}</span>
+                  <div className="comm-top-avatar" style={{ background: CORES_AVATAR[idx % CORES_AVATAR.length] }}>
+                    {s.nome.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="comm-top-info">
+                    <strong>{s.nome} {s.sobrenome}</strong>
+                    <span>{s.total_sessoes} Sessões / {s.total_quizzes} Quizzes</span>
+                  </div>
+                  <span className="comm-top-xp">🔥</span>
                 </div>
-                <div className="comm-top-info">
-                  <strong>{s.nome}</strong>
-                  <span>{s.xp} XP</span>
-                </div>
-                <span className="comm-top-xp">🔥 {s.posicao === 1 ? 21 : s.posicao === 2 ? 15 : 12}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Sugestão de estudo */}
@@ -337,7 +394,7 @@ function Community() {
 }
 
 // ── PostAprendizadoCard ────────────────────────────────────────────────────
-function PostAprendizadoCard({ post, likes, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onAbrirModal }) {
+function PostAprendizadoCard({ post, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista, onAbrirModal }) {
   return (
     <article className="comm-post comm-post-aprendizado">
       <div className="comm-post-avatar" style={{ background: "linear-gradient(135deg,#10b981,#4f46e5)" }}>
@@ -361,16 +418,30 @@ function PostAprendizadoCard({ post, likes, onLike, comentarioAberto, onToggleCo
           Ver Explicação e Fazer Quiz
         </button>
         <div className="comm-post-footer">
-          <span onClick={onLike} className="comm-action">❤️ {likes}</span>
-          <span onClick={onToggleComentario} className="comm-action">💬 {post.comentarios || 0}</span>
+          <span onClick={onLike} className={`comm-action ${post.curtiu ? "curtido" : ""}`} style={{ color: post.curtiu ? "#ef4444" : "inherit" }}>
+            {post.curtiu ? "❤️" : "🤍"} {post.total_likes || 0}
+          </span>
+          <span onClick={onToggleComentario} className="comm-action">💬 {post.total_comentarios || 0}</span>
           <span onClick={onToggleComentario} className="comm-action">Comentar</span>
         </div>
         {comentarioAberto && (
-          <ComentarioInput
-            inicial={post.nome?.charAt(0).toUpperCase()}
-            texto={textoComentario}
-            onChange={onChangeComentario}
-          />
+          <div className="comm-comentarios-container">
+            {comentariosLista.length > 0 && (
+              <div className="comm-comentarios-lista">
+                {comentariosLista.map(c => (
+                  <div key={c.id} className="comm-comentario-item">
+                    <strong>{c.nome}:</strong> {c.conteudo}
+                  </div>
+                ))}
+              </div>
+            )}
+            <ComentarioInput
+              inicial={JSON.parse(localStorage.getItem("usuario") || "{}").nome?.charAt(0).toUpperCase()}
+              texto={textoComentario}
+              onChange={onChangeComentario}
+              onEnviar={onEnviarComentario}
+            />
+          </div>
         )}
       </div>
     </article>
@@ -378,7 +449,7 @@ function PostAprendizadoCard({ post, likes, onLike, comentarioAberto, onToggleCo
 }
 
 // ── PostCard ───────────────────────────────────────────────────────────────
-function PostCard({ post, likes, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario }) {
+function PostCard({ post, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista }) {
   return (
     <article className="comm-post">
       <div className="comm-post-avatar" style={{ background: "linear-gradient(135deg,#4f46e5,#06b6d4)" }}>
@@ -395,16 +466,30 @@ function PostCard({ post, likes, onLike, comentarioAberto, onToggleComentario, t
         <h3 className="comm-post-titulo">{post.titulo}</h3>
         <p className="comm-post-texto">{post.conteudo}</p>
         <div className="comm-post-footer">
-          <span onClick={onLike} className="comm-action">❤️ {likes}</span>
-          <span onClick={onToggleComentario} className="comm-action">💬 {post.comentarios || 0}</span>
+          <span onClick={onLike} className={`comm-action ${post.curtiu ? "curtido" : ""}`} style={{ color: post.curtiu ? "#ef4444" : "inherit" }}>
+            {post.curtiu ? "❤️" : "🤍"} {post.total_likes || 0}
+          </span>
+          <span onClick={onToggleComentario} className="comm-action">💬 {post.total_comentarios || 0}</span>
           <span onClick={onToggleComentario} className="comm-action">Comentar</span>
         </div>
         {comentarioAberto && (
-          <ComentarioInput
-            inicial={post.nome?.charAt(0).toUpperCase()}
-            texto={textoComentario}
-            onChange={onChangeComentario}
-          />
+          <div className="comm-comentarios-container">
+            {comentariosLista.length > 0 && (
+              <div className="comm-comentarios-lista">
+                {comentariosLista.map(c => (
+                  <div key={c.id} className="comm-comentario-item">
+                    <strong>{c.nome}:</strong> {c.conteudo}
+                  </div>
+                ))}
+              </div>
+            )}
+            <ComentarioInput
+              inicial={JSON.parse(localStorage.getItem("usuario") || "{}").nome?.charAt(0).toUpperCase()}
+              texto={textoComentario}
+              onChange={onChangeComentario}
+              onEnviar={onEnviarComentario}
+            />
+          </div>
         )}
       </div>
     </article>
@@ -412,7 +497,7 @@ function PostCard({ post, likes, onLike, comentarioAberto, onToggleComentario, t
 }
 
 // ── ComentarioInput ────────────────────────────────────────────────────────
-function ComentarioInput({ inicial, texto, onChange }) {
+function ComentarioInput({ inicial, texto, onChange, onEnviar }) {
   return (
     <div className="comm-comentario">
       <div className="comm-comentario-avatar">{inicial}</div>
@@ -420,8 +505,9 @@ function ComentarioInput({ inicial, texto, onChange }) {
         placeholder="Escreva um comentário..."
         value={texto}
         onChange={onChange}
+        onKeyDown={(e) => { if (e.key === "Enter") onEnviar(); }}
       />
-      <button onClick={() => texto.trim() && alert(`Comentário: "${texto}"`)}>
+      <button onClick={onEnviar}>
         Enviar
       </button>
     </div>

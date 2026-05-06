@@ -13,7 +13,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  flex-wrap: wrap;
+  max-width: 92%;
+  margin: 24px auto 0;
+  border-radius: 24px;
+}
+
+.comm-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .comm-hero-badge {
@@ -89,7 +98,7 @@
   grid-template-columns: 260px minmax(0, 1fr) 280px;
   gap: 20px;
   padding: 24px 32px 48px;
-  max-width: 1300px;
+  max-width: 92%;
   margin: 0 auto;
 }
 
@@ -696,4 +705,31 @@
   padding: 8px 12px;
   font-size: 0.85em;
   text-align: center;
+}
+
+/* ── Comentários Listagem ────────────────────────────────────────────────── */
+.comm-comentarios-container {
+  margin-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+}
+
+.comm-comentarios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.comm-comentario-item {
+  font-size: 0.85em;
+  color: #374151;
+  background: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.comm-comentario-item strong {
+  color: #111827;
+  margin-right: 4px;
 }

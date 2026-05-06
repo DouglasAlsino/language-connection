@@ -29,21 +29,43 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 // ─── Listar todos os posts (feed da comunidade) ───────────────────
-// ─── Listar todos os posts (feed da comunidade) ───────────────────
 router.get("/", authMiddleware, async (req, res) => {
   try {
+    const { filtro } = req.query;
+    const usuario_id = req.usuario.id;
+
+    let whereClause = "";
+    const params = [];
+
+    if (filtro === "seguindo") {
+      whereClause = `WHERE p.usuario_id IN (
+        SELECT CASE WHEN solicitante_id = ? THEN receptor_id ELSE solicitante_id END
+        FROM conexoes
+        WHERE (solicitante_id = ? OR receptor_id = ?) AND status = 'aceita'
+      )`;
+      params.push(usuario_id, usuario_id, usuario_id);
+    }
+
+    params.push(usuario_id);
+
     const [rows] = await db.query(
       `SELECT p.id, p.titulo, p.conteudo, p.idioma, p.tipo, p.pontuacao_quiz,
               p.dados_aprendizado, p.criado_em, p.atualizado_em,
-              u.id AS usuario_id, u.nome, u.sobrenome, u.idioma_nativo
+              u.id AS usuario_id, u.nome, u.sobrenome, u.idioma_nativo,
+              (SELECT COUNT(*) FROM likes WHERE post_id = p.id) AS total_likes,
+              (SELECT COUNT(*) FROM comentarios WHERE post_id = p.id) AS total_comentarios,
+              EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND usuario_id = ?) AS curtiu
        FROM posts p
        JOIN usuarios u ON p.usuario_id = u.id
-       ORDER BY p.criado_em DESC`
+       ${whereClause}
+       ORDER BY p.criado_em DESC`,
+      params
     );
 
     // Parseia o campo dados_aprendizado para cada post do tipo aprendizado
     const postsTratados = rows.map((post) => ({
       ...post,
+      curtiu: !!post.curtiu,
       dados_aprendizado:
         post.dados_aprendizado && typeof post.dados_aprendizado === "string"
           ? JSON.parse(post.dados_aprendizado)
@@ -171,6 +193,83 @@ router.post("/compartilhar-aprendizado", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Erro ao compartilhar aprendizado:", error);
     res.status(500).json({ mensagem: "Erro interno do servidor." });
+  }
+});
+
+// ─── Likes e Comentarios ──────────────────────────────────────────
+
+router.post("/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const usuario_id = req.usuario.id;
+    const { id: post_id } = req.params;
+    
+    await db.query(
+      "INSERT IGNORE INTO likes (post_id, usuario_id) VALUES (?, ?)",
+      [post_id, usuario_id]
+    );
+    res.json({ mensagem: "Like adicionado com sucesso." });
+  } catch (error) {
+    console.error("Erro ao adicionar like:", error);
+    res.status(500).json({ mensagem: "Erro ao curtir post." });
+  }
+});
+
+router.delete("/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const usuario_id = req.usuario.id;
+    const { id: post_id } = req.params;
+    
+    await db.query(
+      "DELETE FROM likes WHERE post_id = ? AND usuario_id = ?",
+      [post_id, usuario_id]
+    );
+    res.json({ mensagem: "Like removido com sucesso." });
+  } catch (error) {
+    console.error("Erro ao remover like:", error);
+    res.status(500).json({ mensagem: "Erro ao remover curtir do post." });
+  }
+});
+
+router.post("/:id/comentarios", authMiddleware, async (req, res) => {
+  try {
+    const usuario_id = req.usuario.id;
+    const { id: post_id } = req.params;
+    const { conteudo } = req.body;
+    
+    if (!conteudo) {
+      return res.status(400).json({ mensagem: "Conteúdo do comentário é obrigatório." });
+    }
+
+    const [result] = await db.query(
+      "INSERT INTO comentarios (post_id, usuario_id, conteudo) VALUES (?, ?, ?)",
+      [post_id, usuario_id, conteudo]
+    );
+
+    res.status(201).json({ mensagem: "Comentário adicionado com sucesso.", comentario_id: result.insertId });
+  } catch (error) {
+    console.error("Erro ao adicionar comentário:", error);
+    res.status(500).json({ mensagem: "Erro ao comentar no post." });
+  }
+});
+
+router.get("/:id/comentarios", authMiddleware, async (req, res) => {
+  try {
+    const { id: post_id } = req.params;
+    
+    const [rows] = await db.query(
+      `SELECT c.id, c.conteudo, c.criado_em,
+              u.id AS usuario_id, u.nome, u.sobrenome
+       FROM comentarios c
+       JOIN usuarios u ON c.usuario_id = u.id
+       WHERE c.post_id = ?
+       ORDER BY c.criado_em ASC`,
+      [post_id]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar comentários:", error);
+    res.status(500).json({ mensagem: "Erro ao buscar comentários." });
   }
 });
 
