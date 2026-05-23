@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./LearningPage.css";
 import { temasPorIdiomaENivel } from "../../data/temasAprendizado";
 
 function LearningPage() {
-  const [topico, setTopico] = useState("");
-  const [idioma, setIdioma] = useState("Português");
+  const location = useLocation();
+  const [topico, setTopico] = useState(location.state?.tema || "");
+  const [idioma, setIdioma] = useState(location.state?.idioma || "Português");
   const [idiomaNativo, setIdiomaNativo] = useState("Português");
   const [nivel, setNivel] = useState("Básico");
   const [explicacaoIA, setExplicacaoIA] = useState(null);
@@ -14,9 +16,11 @@ function LearningPage() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [quizCorrigido, setQuizCorrigido] = useState(false);
-  const [modoEscolhaTema, setModoEscolhaTema] = useState(null);
+  const [modoEscolhaTema, setModoEscolhaTema] = useState(location.state?.tema ? "sugerir" : null);
   const [temaSorteado, setTemaSorteado] = useState(null);
+  const [mostrarModalSucesso, setMostrarModalSucesso] = useState(false);
 
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
   // ── todas as funções permanecem exatamente iguais ──────────────────────────
@@ -105,7 +109,7 @@ function LearningPage() {
         { topico, idioma, nivel, pontuacao: calcularPontuacao().toFixed(0), explicacao: explicacaoIA, quiz: quizIA },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Seu aprendizado foi compartilhado na comunidade!");
+      setMostrarModalSucesso(true);
     } catch (err) { setErro("Não foi possível compartilhar. Tente novamente."); }
     finally { setCarregando(false); }
   };
@@ -343,6 +347,36 @@ function LearningPage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Sucesso Customizado */}
+      {mostrarModalSucesso && (
+        <div className="lp-modal-overlay" onClick={() => setMostrarModalSucesso(false)}>
+          <div className="lp-modal-sucesso" onClick={(e) => e.stopPropagation()}>
+            <div className="lp-modal-sucesso-icon">🎉</div>
+            <h3 className="lp-modal-sucesso-titulo">Compartilhado!</h3>
+            <p className="lp-modal-sucesso-texto">
+              Seu aprendizado e desempenho no quiz foram publicados no feed da comunidade com sucesso!
+            </p>
+            <div className="lp-modal-sucesso-botoes">
+              <button
+                onClick={() => {
+                  setMostrarModalSucesso(false);
+                  navigate("/community");
+                }}
+                className="lp-modal-sucesso-btn-primary"
+              >
+                Ver na Comunidade
+              </button>
+              <button
+                onClick={() => setMostrarModalSucesso(false)}
+                className="lp-modal-sucesso-btn-secondary"
+              >
+                Continuar Estudando
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

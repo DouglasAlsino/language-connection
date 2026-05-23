@@ -434,3 +434,139 @@
   color: #3730a3;
   margin-bottom: 16px;
 }
+
+/* ── Modal de Sucesso Customizado ── */
+.lp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.6); /* Tom escuro ardósia moderno */
+  backdrop-filter: blur(4px); /* Desfoque de fundo elegante */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.lp-modal-sucesso {
+  background-color: white;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 420px;
+  padding: 40px 32px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.lp-modal-sucesso-icon {
+  font-size: 3.2rem;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: #eef2ff;
+  border-radius: 50%;
+  animation: pulseIcon 2.5s infinite;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lp-modal-sucesso-titulo {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1e1b4b; /* Índigo profundo */
+  margin: 0 0 10px;
+}
+
+.lp-modal-sucesso-texto {
+  font-size: 0.95rem;
+  color: #475569; /* Slate escuro para melhor legibilidade */
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+.lp-modal-sucesso-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lp-modal-sucesso-btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #4f46e5 0%, #3b30d4 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  box-sizing: border-box;
+}
+
+.lp-modal-sucesso-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+}
+
+.lp-modal-sucesso-btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.lp-modal-sucesso-btn-secondary:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+/* ── Keyframes Animados ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseIcon {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.2);
+  }
+  70% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}

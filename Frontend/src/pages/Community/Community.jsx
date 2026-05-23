@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import "./Community.css";
 import AprendizadoModal from "../../components/AprendizadoModal/AprendizadoModal.jsx";
+import { temasPorIdiomaENivel } from "../../data/temasAprendizado";
 
 const TRENDS = [
   { tag: "FuturoSimples", count: 124 },
-  { tag: "DicaDoDia",     count: 98  },
-  { tag: "Kanji",         count: 76  },
-  { tag: "Pronúncia",     count: 54  },
+  { tag: "DicaDoDia", count: 98 },
+  { tag: "Kanji", count: 76 },
+  { tag: "Pronúncia", count: 54 },
 ];
 
 const CORES_AVATAR = ["#8B5CF6", "#06B6D4", "#10b981", "#F59E0B", "#EF4444"];
@@ -43,9 +45,11 @@ function Community() {
   const [motivoSelecionado, setMotivoSelecionado] = useState("");
   const [denunciaStatus, setDenunciaStatus] = useState(""); // "sucesso" | "erro" | ""
   const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
+  const [sugestao, setSugestao] = useState({ tema: "Pretérito Perfeito", idioma: "Espanhol" });
 
   const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   const buscarPosts = async () => {
     setErro("");
@@ -83,6 +87,22 @@ function Community() {
     const intervalo = setInterval(buscarPosts, 15000);
     return () => clearInterval(intervalo);
   }, [abaAtiva]);
+
+  useEffect(() => {
+    const idiomas = Object.keys(temasPorIdiomaENivel);
+    if (idiomas.length > 0) {
+      const idiomaAleatorio = idiomas[Math.floor(Math.random() * idiomas.length)];
+      const niveis = Object.keys(temasPorIdiomaENivel[idiomaAleatorio]);
+      if (niveis.length > 0) {
+        const nivelAleatorio = niveis[Math.floor(Math.random() * niveis.length)];
+        const temas = temasPorIdiomaENivel[idiomaAleatorio][nivelAleatorio];
+        if (temas && temas.length > 0) {
+          const temaAleatorio = temas[Math.floor(Math.random() * temas.length)];
+          setSugestao({ tema: temaAleatorio, idioma: idiomaAleatorio });
+        }
+      }
+    }
+  }, []);
 
   const criarPost = async (e) => {
     e.preventDefault();
@@ -426,9 +446,9 @@ function Community() {
           <div className="comm-card">
             <div className="comm-card-title"><span>🎯</span> Sugestão de estudo</div>
             <p className="comm-sugestao-texto">
-              Que tal revisar <strong>Pretérito Perfeito</strong> em Espanhol hoje?
+              Que tal revisar <strong>{sugestao.tema}</strong> em {sugestao.idioma} hoje?
             </p>
-            <button className="comm-btn-iniciar">✦ Iniciar sessão</button>
+            <button className="comm-btn-iniciar" onClick={() => navigate("/aprender", { state: { tema: sugestao.tema, idioma: sugestao.idioma } })}>✦ Iniciar sessão</button>
           </div>
         </aside>
       </div>
