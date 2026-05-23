@@ -78,6 +78,7 @@ async function cadastro(req, res) {
       {
         id: resultado.insertId, // ID gerado pelo MySQL
         email: email,
+        role: "user",  // role sempre user
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" } // token válido por 7 dias
@@ -95,6 +96,7 @@ async function cadastro(req, res) {
         idioma_nativo,
         idiomas_aprender: idiomas_aprender,
         nivel,
+        role: "user",
       },
     });
   } catch (error) {
@@ -123,10 +125,11 @@ async function login(req, res) {
 
   try {
     // Busca o usuário pelo email no banco
-    const [usuarios] = await db.query(
-      "SELECT * FROM usuarios WHERE email = ?",
-      [email]
-    );
+    // Busca o usuário pelo email — adiciona role na query
+  const [usuarios] = await db.query(
+    "SELECT id, nome, sobrenome, email, senha, idioma_nativo, idiomas_aprender, nivel, bio, role FROM usuarios WHERE email = ?",
+    [email]
+  );
 
     // Se não encontrou nenhum usuário com esse email
     if (usuarios.length === 0) {
@@ -153,6 +156,7 @@ async function login(req, res) {
       {
         id: usuario.id,
         email: usuario.email,
+        role: usuario.role, // role do user
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -174,6 +178,7 @@ async function login(req, res) {
           : [],
         nivel: usuario.nivel,
         bio: usuario.bio,
+        role: usuario.role, // role do user
       },
     });
   } catch (error) {

@@ -273,4 +273,47 @@ router.get("/:id/comentarios", authMiddleware, async (req, res) => {
   }
 });
 
+// ─── Denunciar um post ────────────────────────────────────────────
+router.post("/:id/denunciar", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { motivo } = req.body;
+    const usuario_id = req.usuario.id;
+
+    if (!motivo) {
+      return res.status(400).json({ mensagem: "Motivo é obrigatório." });
+    }
+
+    // Verifica se o post existe
+    const [[post]] = await db.query("SELECT id, usuario_id FROM posts WHERE id = ?", [id]);
+    if (!post) {
+      return res.status(404).json({ mensagem: "Post não encontrado." });
+    }
+
+    // Não pode denunciar o próprio post
+    if (post.usuario_id === usuario_id) {
+      return res.status(400).json({ mensagem: "Você não pode denunciar seu próprio post." });
+    }
+
+    // Evita denúncias duplicadas do mesmo usuário no mesmo post
+    const [[jaDenou]] = await db.query(
+      "SELECT id FROM denuncias WHERE post_id = ? AND usuario_id = ?",
+      [id, usuario_id]
+    );
+    if (jaDenou) {
+      return res.status(400).json({ mensagem: "Você já denunciou este post." });
+    }
+
+    await db.query(
+      "INSERT INTO denuncias (post_id, usuario_id, motivo) VALUES (?, ?, ?)",
+      [id, usuario_id, motivo]
+    );
+
+    res.status(201).json({ mensagem: "Denúncia enviada com sucesso." });
+  } catch (error) {
+    console.error("Erro ao denunciar post:", error);
+    res.status(500).json({ mensagem: "Erro interno ao enviar denúncia." });
+  }
+});
+
 module.exports = router;

@@ -18,7 +18,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const [usuarios] = await db.query(
       `SELECT id, nome, sobrenome, idioma_nativo, idiomas_aprender, nivel, bio
        FROM usuarios
-       WHERE id != ?
+       WHERE id != ? AND role != 'admin'
        ORDER BY criado_em DESC`,
        [idUsuarioLogado]
     );

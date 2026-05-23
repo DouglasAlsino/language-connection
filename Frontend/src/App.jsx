@@ -17,7 +17,9 @@ import Profile from "./pages/Profile/Profile";
 import RequireAuth from "./components/RequireAuth";
 import LearningPage from "./pages/LearningPage/LearningPage";
 
-// PerfilUsuario removido — tudo está unificado no Profile.jsx
+import AdminLogin from "./pages/AdminLogin/AdminLogin";
+import AdminPanel from "./pages/AdminPanel/AdminPanel";
+import AdminRoute from "./components/AdminRoute/AdminRoute";
 
 function App() {
   return (
@@ -30,8 +32,9 @@ function App() {
 function Content() {
   const location = useLocation();
 
-  const rotasPublicas = ["/login", "/register"];
-  const showNavbar = !rotasPublicas.includes(location.pathname.toLowerCase());
+  // Rotas que não exibem a Navbar
+  const rotasSemNavbar = ["/login", "/register", "/admin/login", "/admin/panel"];
+  const showNavbar = !rotasSemNavbar.includes(location.pathname.toLowerCase());
 
   return (
     <div>
@@ -41,18 +44,25 @@ function Content() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Rotas admin — públicas mas invisíveis */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* Rotas admin — protegidas pelo AdminRoute */}
+        <Route
+          path="/admin/panel"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
+
         {/* Rotas protegidas */}
         <Route path="/users" element={<RequireAuth><Users /></RequireAuth>} />
         <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
         <Route path="/community" element={<RequireAuth><Community /></RequireAuth>} />
         <Route path="/aprender" element={<RequireAuth><LearningPage /></RequireAuth>} />
-
-        {/* Perfil próprio — sem id na URL */}
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-
-        {/* Perfil de qualquer usuário pelo id — unificado no mesmo componente */}
-        {/* /profile/:id e /usuarios/:id apontam para o mesmo Profile.jsx  */}
-        {/* O Profile.jsx usa useParams() para pegar o id e decide o que mostrar */}
         <Route path="/profile/:id" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/usuarios/:id" element={<RequireAuth><Profile /></RequireAuth>} />
 

@@ -14,6 +14,14 @@ const TRENDS = [
 
 const CORES_AVATAR = ["#8B5CF6", "#06B6D4", "#10b981", "#F59E0B", "#EF4444"];
 
+const MOTIVOS_DENUNCIA = [
+  "Conteúdo inapropriado",
+  "Spam",
+  "Desinformação",
+  "Assédio",
+  "Outro",
+];
+
 function Community() {
   const [posts, setPosts] = useState([]);
   const [novoPostTitulo, setNovoPostTitulo] = useState("");
@@ -30,16 +38,21 @@ function Community() {
   const [topUsers, setTopUsers] = useState([]);
   const [postModalAberto, setPostModalAberto] = useState(null);
 
+  // ── Estados da denúncia ──────────────────────────────────────────
+  const [denunciaModal, setDenunciaModal] = useState(null); // post_id ou null
+  const [motivoSelecionado, setMotivoSelecionado] = useState("");
+  const [denunciaStatus, setDenunciaStatus] = useState(""); // "sucesso" | "erro" | ""
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
+
   const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
   const token = localStorage.getItem("token");
 
   const buscarPosts = async () => {
     setErro("");
     try {
-      const url = abaAtiva === "seguindo" 
-        ? "http://localhost:3000/posts?filtro=seguindo" 
+      const url = abaAtiva === "seguindo"
+        ? "http://localhost:3000/posts?filtro=seguindo"
         : "http://localhost:3000/posts";
-        
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -56,10 +69,10 @@ function Community() {
   const buscarRanking = async () => {
     try {
       const response = await axios.get("http://localhost:3000/atividades/ranking", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setTopUsers(response.data);
-    } catch(err) {
+    } catch (err) {
       console.error(err);
     }
   };
@@ -87,7 +100,7 @@ function Community() {
       setNovoPostTitulo("");
       setNovoPostConteudo("");
       setNovoPostIdioma("");
-      buscarPosts(); // Refresh to get the new post with all joins
+      buscarPosts();
     } catch (err) {
       setErro("Não foi possível criar o post.");
     }
@@ -96,11 +109,23 @@ function Community() {
   const toggleLike = async (postId, curtiu) => {
     try {
       if (curtiu) {
-        await axios.delete(`http://localhost:3000/posts/${postId}/like`, { headers: { Authorization: `Bearer ${token}` } });
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, curtiu: false, total_likes: p.total_likes - 1 } : p));
+        await axios.delete(`http://localhost:3000/posts/${postId}/like`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, curtiu: false, total_likes: p.total_likes - 1 } : p
+          )
+        );
       } else {
-        await axios.post(`http://localhost:3000/posts/${postId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, curtiu: true, total_likes: p.total_likes + 1 } : p));
+        await axios.post(`http://localhost:3000/posts/${postId}/like`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, curtiu: true, total_likes: p.total_likes + 1 } : p
+          )
+        );
       }
     } catch (err) {
       console.error(err);
@@ -109,8 +134,11 @@ function Community() {
 
   const buscarComentarios = async (postId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/posts/${postId}/comentarios`, { headers: { Authorization: `Bearer ${token}` } });
-      setComentariosPost(prev => ({ ...prev, [postId]: response.data }));
+      const response = await axios.get(
+        `http://localhost:3000/posts/${postId}/comentarios`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setComentariosPost((prev) => ({ ...prev, [postId]: response.data }));
     } catch (err) {
       console.error(err);
     }
@@ -130,15 +158,51 @@ function Community() {
     if (!textoComentario.trim()) return;
     try {
       await axios.post(
-        `http://localhost:3000/posts/${postId}/comentarios`, 
-        { conteudo: textoComentario }, 
+        `http://localhost:3000/posts/${postId}/comentarios`,
+        { conteudo: textoComentario },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTextoComentario("");
       buscarComentarios(postId);
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, total_comentarios: p.total_comentarios + 1 } : p));
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, total_comentarios: p.total_comentarios + 1 } : p
+        )
+      );
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // ── Handlers de denúncia ─────────────────────────────────────────
+  const abrirDenuncia = (postId) => {
+    setDenunciaModal(postId);
+    setMotivoSelecionado("");
+    setDenunciaStatus("");
+  };
+
+  const fecharDenuncia = () => {
+    setDenunciaModal(null);
+    setMotivoSelecionado("");
+    setDenunciaStatus("");
+  };
+
+  const enviarDenuncia = async () => {
+    if (!motivoSelecionado) return;
+    setEnviandoDenuncia(true);
+    try {
+      await axios.post(
+        `http://localhost:3000/posts/${denunciaModal}/denunciar`,
+        { motivo: motivoSelecionado },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setDenunciaStatus("sucesso");
+      setTimeout(() => fecharDenuncia(), 2000);
+    } catch (err) {
+      const msg = err.response?.data?.mensagem || "Erro ao enviar denúncia.";
+      setDenunciaStatus(msg);
+    } finally {
+      setEnviandoDenuncia(false);
     }
   };
 
@@ -149,7 +213,7 @@ function Community() {
       if (abaAtiva === "populares") {
         return (b.total_likes + b.total_comentarios) - (a.total_likes + a.total_comentarios);
       }
-      return 0; // "recentes" e "seguindo" já vem ordenado do backend por criado_em DESC
+      return 0;
     });
 
   const filtros = ["Todos", "Português", "Inglês", "Espanhol", "Francês", "Alemão", "Japonês"];
@@ -191,11 +255,8 @@ function Community() {
 
         {/* COLUNA ESQUERDA */}
         <aside className="comm-sidebar">
-
           <div className="comm-card">
-            <div className="comm-card-title">
-              <span>⚡</span> Filtrar por idioma
-            </div>
+            <div className="comm-card-title"><span>⚡</span> Filtrar por idioma</div>
             <div className="comm-chips">
               {filtros.map((f) => (
                 <span
@@ -210,9 +271,7 @@ function Community() {
           </div>
 
           <div className="comm-card">
-            <div className="comm-card-title">
-              <span>📈</span> Em alta
-            </div>
+            <div className="comm-card-title"><span>📈</span> Em alta</div>
             <div className="comm-trends">
               {TRENDS.map((t) => (
                 <div key={t.tag} className="comm-trend-item">
@@ -223,18 +282,13 @@ function Community() {
               ))}
             </div>
           </div>
-
         </aside>
 
         {/* COLUNA CENTRAL */}
         <main className="comm-feed">
 
-          {/* Card de criar post */}
           <div className="comm-card comm-create">
-            <div
-              className="comm-create-avatar"
-              style={{ background: "linear-gradient(135deg,#4f46e5,#06b6d4)" }}
-            >
+            <div className="comm-create-avatar" style={{ background: "linear-gradient(135deg,#4f46e5,#06b6d4)" }}>
               {usuarioLogado.nome?.charAt(0).toUpperCase()}
             </div>
             <div className="comm-create-body">
@@ -273,7 +327,6 @@ function Community() {
             </div>
           </div>
 
-          {/* Tabs de ordenação + busca */}
           <div className="comm-feed-bar">
             <div className="comm-tabs">
               {["recentes", "populares", "seguindo"].map((aba) => (
@@ -296,7 +349,6 @@ function Community() {
             </div>
           </div>
 
-          {/* Lista de posts */}
           {carregandoPosts ? (
             <p className="comm-loading">Carregando posts...</p>
           ) : postsFiltrados.length === 0 ? (
@@ -312,6 +364,7 @@ function Community() {
                 <PostAprendizadoCard
                   key={post.id}
                   post={post}
+                  usuarioLogadoId={usuarioLogado.id}
                   onLike={() => toggleLike(post.id, post.curtiu)}
                   comentarioAberto={comentarioAberto === post.id}
                   onToggleComentario={() => toggleComentario(post.id)}
@@ -320,11 +373,13 @@ function Community() {
                   onEnviarComentario={() => enviarComentario(post.id)}
                   comentariosLista={comentariosPost[post.id] || []}
                   onAbrirModal={() => setPostModalAberto(post)}
+                  onDenunciar={() => abrirDenuncia(post.id)}
                 />
               ) : (
                 <PostCard
                   key={post.id}
                   post={post}
+                  usuarioLogadoId={usuarioLogado.id}
                   onLike={() => toggleLike(post.id, post.curtiu)}
                   comentarioAberto={comentarioAberto === post.id}
                   onToggleComentario={() => toggleComentario(post.id)}
@@ -332,6 +387,7 @@ function Community() {
                   onChangeComentario={(e) => setTextoComentario(e.target.value)}
                   onEnviarComentario={() => enviarComentario(post.id)}
                   comentariosLista={comentariosPost[post.id] || []}
+                  onDenunciar={() => abrirDenuncia(post.id)}
                 />
               )
             )
@@ -340,8 +396,6 @@ function Community() {
 
         {/* COLUNA DIREITA */}
         <aside className="comm-right">
-
-          {/* Top Aprender+ */}
           <div className="comm-card comm-top-card">
             <div className="comm-top-header">
               <span>🏆</span>
@@ -369,19 +423,70 @@ function Community() {
             )}
           </div>
 
-          {/* Sugestão de estudo */}
           <div className="comm-card">
-            <div className="comm-card-title">
-              <span>🎯</span> Sugestão de estudo
-            </div>
+            <div className="comm-card-title"><span>🎯</span> Sugestão de estudo</div>
             <p className="comm-sugestao-texto">
               Que tal revisar <strong>Pretérito Perfeito</strong> em Espanhol hoje?
             </p>
             <button className="comm-btn-iniciar">✦ Iniciar sessão</button>
           </div>
-
         </aside>
       </div>
+
+      {/* ── Modal de denúncia ────────────────────────────────────── */}
+      {denunciaModal && (
+        <div className="comm-modal-overlay" onClick={fecharDenuncia}>
+          <div className="comm-modal-denuncia" onClick={(e) => e.stopPropagation()}>
+            <div className="comm-modal-header">
+              <h3>⚑ Denunciar post</h3>
+              <button className="comm-modal-fechar" onClick={fecharDenuncia}>✕</button>
+            </div>
+
+            {denunciaStatus === "sucesso" ? (
+              <div className="comm-denuncia-sucesso">
+                <span>✓</span>
+                <p>Denúncia enviada! Nossa equipe irá analisar em breve.</p>
+              </div>
+            ) : (
+              <>
+                <p className="comm-modal-sub">
+                  Selecione o motivo da denúncia. Nossa equipe irá analisar e tomar as medidas cabíveis.
+                </p>
+
+                <div className="comm-motivos">
+                  {MOTIVOS_DENUNCIA.map((motivo) => (
+                    <button
+                      key={motivo}
+                      className={`comm-motivo-btn ${motivoSelecionado === motivo ? "ativo" : ""}`}
+                      onClick={() => setMotivoSelecionado(motivo)}
+                    >
+                      {motivoSelecionado === motivo ? "● " : "○ "}
+                      {motivo}
+                    </button>
+                  ))}
+                </div>
+
+                {denunciaStatus && denunciaStatus !== "sucesso" && (
+                  <p className="comm-denuncia-erro">{denunciaStatus}</p>
+                )}
+
+                <div className="comm-modal-footer">
+                  <button className="comm-btn-cancelar" onClick={fecharDenuncia}>
+                    Cancelar
+                  </button>
+                  <button
+                    className="comm-btn-denunciar"
+                    onClick={enviarDenuncia}
+                    disabled={!motivoSelecionado || enviandoDenuncia}
+                  >
+                    {enviandoDenuncia ? "Enviando..." : "Enviar denúncia"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {postModalAberto && (
         <AprendizadoModal
@@ -393,8 +498,8 @@ function Community() {
   );
 }
 
-// ── PostAprendizadoCard ────────────────────────────────────────────────────
-function PostAprendizadoCard({ post, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista, onAbrirModal }) {
+// ── PostAprendizadoCard ────────────────────────────────────────────
+function PostAprendizadoCard({ post, usuarioLogadoId, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista, onAbrirModal, onDenunciar }) {
   return (
     <article className="comm-post comm-post-aprendizado">
       <div className="comm-post-avatar" style={{ background: "linear-gradient(135deg,#10b981,#4f46e5)" }}>
@@ -423,12 +528,19 @@ function PostAprendizadoCard({ post, onLike, comentarioAberto, onToggleComentari
           </span>
           <span onClick={onToggleComentario} className="comm-action">💬 {post.total_comentarios || 0}</span>
           <span onClick={onToggleComentario} className="comm-action">Comentar</span>
+
+          {/* Botão de denúncia — só aparece se não for o próprio post */}
+          {post.usuario_id !== usuarioLogadoId && (
+            <span onClick={onDenunciar} className="comm-action comm-action-denuncia" title="Denunciar post">
+              ⚑ Denunciar
+            </span>
+          )}
         </div>
         {comentarioAberto && (
           <div className="comm-comentarios-container">
             {comentariosLista.length > 0 && (
               <div className="comm-comentarios-lista">
-                {comentariosLista.map(c => (
+                {comentariosLista.map((c) => (
                   <div key={c.id} className="comm-comentario-item">
                     <strong>{c.nome}:</strong> {c.conteudo}
                   </div>
@@ -448,8 +560,8 @@ function PostAprendizadoCard({ post, onLike, comentarioAberto, onToggleComentari
   );
 }
 
-// ── PostCard ───────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista }) {
+// ── PostCard ───────────────────────────────────────────────────────
+function PostCard({ post, usuarioLogadoId, onLike, comentarioAberto, onToggleComentario, textoComentario, onChangeComentario, onEnviarComentario, comentariosLista, onDenunciar }) {
   return (
     <article className="comm-post">
       <div className="comm-post-avatar" style={{ background: "linear-gradient(135deg,#4f46e5,#06b6d4)" }}>
@@ -471,12 +583,19 @@ function PostCard({ post, onLike, comentarioAberto, onToggleComentario, textoCom
           </span>
           <span onClick={onToggleComentario} className="comm-action">💬 {post.total_comentarios || 0}</span>
           <span onClick={onToggleComentario} className="comm-action">Comentar</span>
+
+          {/* Botão de denúncia — só aparece se não for o próprio post */}
+          {post.usuario_id !== usuarioLogadoId && (
+            <span onClick={onDenunciar} className="comm-action comm-action-denuncia" title="Denunciar post">
+              ⚑ Denunciar
+            </span>
+          )}
         </div>
         {comentarioAberto && (
           <div className="comm-comentarios-container">
             {comentariosLista.length > 0 && (
               <div className="comm-comentarios-lista">
-                {comentariosLista.map(c => (
+                {comentariosLista.map((c) => (
                   <div key={c.id} className="comm-comentario-item">
                     <strong>{c.nome}:</strong> {c.conteudo}
                   </div>
@@ -496,7 +615,7 @@ function PostCard({ post, onLike, comentarioAberto, onToggleComentario, textoCom
   );
 }
 
-// ── ComentarioInput ────────────────────────────────────────────────────────
+// ── ComentarioInput ────────────────────────────────────────────────
 function ComentarioInput({ inicial, texto, onChange, onEnviar }) {
   return (
     <div className="comm-comentario">
@@ -507,9 +626,7 @@ function ComentarioInput({ inicial, texto, onChange, onEnviar }) {
         onChange={onChange}
         onKeyDown={(e) => { if (e.key === "Enter") onEnviar(); }}
       />
-      <button onClick={onEnviar}>
-        Enviar
-      </button>
+      <button onClick={onEnviar}>Enviar</button>
     </div>
   );
 }
