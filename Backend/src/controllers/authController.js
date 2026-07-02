@@ -1,17 +1,10 @@
-// Importa o pool de conexão com o banco
 const db = require("../config/db");
 
-// bcryptjs para criptografar e comparar senhas
 const bcrypt = require("bcryptjs");
 
-// jsonwebtoken para gerar o token JWT
 const jwt = require("jsonwebtoken");
 
-// ─────────────────────────────────────────
-// CADASTRO
-// POST /auth/cadastro
-// Cria um novo usuário no banco de dados
-// ─────────────────────────────────────────
+
 async function cadastro(req, res) {
   // Pega os dados enviados pelo frontend no body da requisição
   const {
@@ -24,7 +17,7 @@ async function cadastro(req, res) {
     nivel,
   } = req.body;
 
-  // Validação básica: todos os campos obrigatórios devem existir
+
   if (!nome || !sobrenome || !email || !senha) {
     return res.status(400).json({
       erro: "Preencha todos os campos obrigatórios.",
@@ -32,8 +25,6 @@ async function cadastro(req, res) {
   }
 
   try {
-    // Verifica se já existe um usuário com esse email
-    // Evita cadastros duplicados
     const [usuarioExistente] = await db.query(
       "SELECT id FROM usuarios WHERE email = ?",
       [email]
@@ -45,18 +36,15 @@ async function cadastro(req, res) {
       });
     }
 
-    // Criptografa a senha antes de salvar
-    // O número 10 é o "salt rounds" — quanto maior, mais seguro (e mais lento)
-    // 10 é o valor padrão recomendado
+
     const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-    // idiomas_aprender vem como array do frontend (ex: ["Inglês", "Espanhol"])
-    // Converte para string para salvar no MySQL
+
     const idiomasString = Array.isArray(idiomas_aprender)
       ? idiomas_aprender.join(",")
       : idiomas_aprender;
 
-    // Insere o novo usuário no banco
+
     const [resultado] = await db.query(
       `INSERT INTO usuarios 
         (nome, sobrenome, email, senha, idioma_nativo, idiomas_aprender, nivel)
@@ -72,19 +60,17 @@ async function cadastro(req, res) {
       ]
     );
 
-    // Gera um token JWT para o usuário recém-cadastrado
-    // Assim ele já fica logado após o cadastro sem precisar fazer login
     const token = jwt.sign(
       {
-        id: resultado.insertId, // ID gerado pelo MySQL
+        id: resultado.insertId,
         email: email,
-        role: "user",  // role sempre user
+        role: "user",
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" } // token válido por 7 dias
+      { expiresIn: "7d" }
     );
 
-    // Retorna o token e os dados básicos do usuário
+  
     return res.status(201).json({
       mensagem: "Usuário cadastrado com sucesso!",
       token,
@@ -107,16 +93,12 @@ async function cadastro(req, res) {
   }
 }
 
-// ─────────────────────────────────────────
-// LOGIN
-// POST /auth/login
-// Autentica um usuário existente
-// ─────────────────────────────────────────
+
 async function login(req, res) {
-  // Pega email e senha enviados pelo frontend
+
   const { email, senha } = req.body;
 
-  // Validação básica
+
   if (!email || !senha) {
     return res.status(400).json({
       erro: "Informe e-mail e senha.",
@@ -124,25 +106,22 @@ async function login(req, res) {
   }
 
   try {
-    // Busca o usuário pelo email no banco
-    // Busca o usuário pelo email — adiciona role na query
+
   const [usuarios] = await db.query(
     "SELECT id, nome, sobrenome, email, senha, idioma_nativo, idiomas_aprender, nivel, bio, role FROM usuarios WHERE email = ?",
     [email]
   );
 
-    // Se não encontrou nenhum usuário com esse email
+
     if (usuarios.length === 0) {
       return res.status(401).json({
         erro: "E-mail ou senha incorretos.",
       });
     }
 
-    // Pega o primeiro (e único) resultado
+
     const usuario = usuarios[0];
 
-    // Compara a senha digitada com o hash salvo no banco
-    // bcrypt.compare retorna true se baterem, false se não
     const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
 
     if (!senhaCorreta) {
@@ -151,7 +130,6 @@ async function login(req, res) {
       });
     }
 
-    // Gera o token JWT com os dados do usuário
     const token = jwt.sign(
       {
         id: usuario.id,
@@ -162,8 +140,7 @@ async function login(req, res) {
       { expiresIn: "7d" }
     );
 
-    // Retorna o token e os dados do usuário
-    // Nunca retornamos a senha, mesmo que criptografada
+
     return res.status(200).json({
       mensagem: "Login realizado com sucesso!",
       token,
@@ -174,11 +151,11 @@ async function login(req, res) {
         email: usuario.email,
         idioma_nativo: usuario.idioma_nativo,
         idiomas_aprender: usuario.idiomas_aprender
-          ? usuario.idiomas_aprender.split(",") // converte string de volta para array
+          ? usuario.idiomas_aprender.split(",") 
           : [],
         nivel: usuario.nivel,
         bio: usuario.bio,
-        role: usuario.role, // role do user
+        role: usuario.role, 
       },
     });
   } catch (error) {
