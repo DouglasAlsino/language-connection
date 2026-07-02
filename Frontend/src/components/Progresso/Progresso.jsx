@@ -1,7 +1,6 @@
 import "./Progresso.css";
 
 function Progresso({ progresso }) {
-  // Se ainda não carregou os dados, mostra uma mensagem
   if (!progresso) {
     return (
       <div className="prog-vazio">
@@ -12,7 +11,6 @@ function Progresso({ progresso }) {
 
   const { resumo, por_idioma, historico } = progresso;
 
-  // Se o usuário nunca fez um quiz, mostra mensagem motivacional
   if (resumo.total_quizzes === 0) {
     return (
       <div className="prog-vazio">
@@ -25,7 +23,6 @@ function Progresso({ progresso }) {
     <div className="prog-container">
 
       {/* ─── Bloco 1: Resumo geral ─────────────────────────── */}
-      {/* Três cards lado a lado mostrando os números gerais */}
       <div className="prog-resumo">
         <div className="prog-resumo-card">
           <div className="prog-resumo-numero">{resumo.total_sessoes}</div>
@@ -42,8 +39,6 @@ function Progresso({ progresso }) {
       </div>
 
       {/* ─── Bloco 2: Progresso por idioma ─────────────────── */}
-      {/* Para cada idioma que o usuário praticou, uma barra    */}
-      {/* mostrando a média de pontuação nos quizzes            */}
       <div className="prog-secao">
         <h3 className="prog-secao-titulo">Progresso por idioma</h3>
         <div className="prog-idiomas">
@@ -56,11 +51,8 @@ function Progresso({ progresso }) {
                 </span>
               </div>
 
-              {/* Fundo cinza da barra */}
               <div className="prog-barra-fundo">
-                {/* Barra colorida que cresce conforme a média */}
-                {/* A cor muda dependendo do desempenho:        */}
-                {/* verde >= 70%, amarelo >= 40%, vermelho < 40% */}
+
                 <div
                   className="prog-barra-preenchimento"
                   style={{
@@ -80,7 +72,6 @@ function Progresso({ progresso }) {
       </div>
 
       {/* ─── Bloco 3: Histórico de quizzes ─────────────────── */}
-      {/* Lista cronológica dos últimos 10 quizzes com detalhes */}
       <div className="prog-secao">
         <h3 className="prog-secao-titulo">Histórico de quizzes</h3>
         <div className="prog-historico">
@@ -93,7 +84,6 @@ function Progresso({ progresso }) {
                 </div>
               </div>
 
-              {/* Badge de pontuação com cor dinâmica */}
               <div
                 className="prog-historico-nota"
                 style={{
