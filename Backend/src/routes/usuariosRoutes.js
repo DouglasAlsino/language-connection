@@ -1,16 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-// Importa o middleware de autenticação
-// Caminho: de src/routes até src/middleware/auth.js
+
 const authMiddleware = require("../middleware/auth");
 
-// Importa a conexão com o banco de dados
-// Ajuste o caminho conforme onde está o seu db.js
+
 const db = require("../config/db");
 
-// GET /usuarios — retorna todos os usuários cadastrados
-// authMiddleware verifica o token antes de deixar passar
+
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const idUsuarioLogado = req.usuario.id;
@@ -30,7 +27,7 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// Busca o perfil de um usuário específico pelo id
+
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -53,14 +50,14 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// PUT /usuarios/:id — atualizar perfil
+
 router.put("/:id", authMiddleware, async (req, res) => {
   console.log("id da URL:", req.params.id, typeof req.params.id);
   console.log("id do token:", req.usuarioId, typeof req.usuario.id);
   const { id } = req.params;
   const { bio, idioma_nativo, idiomas_aprender, nivel } = req.body;
 
-  // Garante que o usuário só pode editar o próprio perfil
+  
   if (parseInt(id) !== req.usuario.id) {
     return res.status(403).json({ mensagem: "Acesso negado." });
   }
