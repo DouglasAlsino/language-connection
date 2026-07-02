@@ -6,10 +6,7 @@ import EditarPerfilModal from "../../components/EditarPerfilModal/EditarPerfilMo
 import AtividadeModal from "../../components/AtividadeModal/AtividadeModal.jsx";
 import Progresso from "../../components/Progresso/Progresso";
 
-// ─── ConexaoItem ────────────────────────────────────────────────────────────
-// Recebe isProprioPeril para saber qual botão mostrar na base do card:
-// - Dono do perfil: botão "Desconectar"
-// - Visitante: botão "Ver perfil"
+
 function ConexaoItem({ conexao, token, isProprioPeril, onRemover }) {
   const navigate = useNavigate();
   const [removendo, setRemovendo] = useState(false);
@@ -141,8 +138,7 @@ function Perfil() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Só busca status de conexão quando está vendo o perfil de outra pessoa
-        // Não faz sentido verificar se você está conectado consigo mesmo
+
         if (!isProprioPeril) {
           const resStatus = await axios.get(
             `http://localhost:3000/conexoes/status/${idAlvo}`,
@@ -163,7 +159,6 @@ function Perfil() {
     buscarPerfil();
   }, [idAlvo]);
 
-  // Envia solicitação de conexão para o usuário do perfil visitado
   async function enviarSolicitacao() {
     try {
       await axios.post(
@@ -177,7 +172,6 @@ function Perfil() {
     }
   }
 
-  // Desfaz a conexão com o usuário do perfil visitado
   async function desconectar() {
     try {
       setDesconectando(true);
@@ -192,8 +186,6 @@ function Perfil() {
     }
   }
 
-  // Decide qual botão mostrar na sidebar dependendo de quem está vendo o perfil
-  // e qual o status atual da conexão entre os dois usuários
   function renderizarBotaoConexao() {
     if (isProprioPeril) {
       return (
@@ -287,7 +279,6 @@ function Perfil() {
               </div>
             </div>
 
-            {/* Substituímos o condicional simples pela função que cobre todos os casos */}
             {renderizarBotaoConexao()}
 
           </div>
