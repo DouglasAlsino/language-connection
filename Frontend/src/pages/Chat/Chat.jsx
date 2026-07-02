@@ -4,11 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import axios from "axios";
 
-// Cria o socket FORA do componente
-// Isso garante uma única instância durante toda a vida da aplicação
-// O StrictMode não consegue duplicar porque não está dentro do ciclo de render
+
 const socket = io("http://localhost:3000", {
-  autoConnect: false, // não conecta automaticamente, vamos controlar isso manualmente
+  autoConnect: false, 
 });
 
 function Chat() {
@@ -29,7 +27,6 @@ function Chat() {
   // ─── Conecta o socket e registra os listeners ─────────────────────
   useEffect(() => {
 
-    // Conecta manualmente — controlamos quando isso acontece
     socket.connect();
 
     const aoConectar = () => {
@@ -44,9 +41,7 @@ function Chat() {
             mensagem.destinatario_id === conversaAtualizada.id)
         ) {
           setMensagens((prev) => {
-            // Proteção extra contra duplicatas:
-            // verifica se a mensagem já existe na lista pelo ID
-            // antes de adicionar
+
             const jaExiste = prev.some((m) => m.id === mensagem.id);
             if (jaExiste) return prev;
             return [...prev, mensagem];
@@ -56,13 +51,9 @@ function Chat() {
       });
     };
 
-    // Registra os listeners usando as funções nomeadas acima
-    // Funções nomeadas permitem remover o listener específico no cleanup
     socket.on("connect", aoConectar);
     socket.on("nova_mensagem", aoReceberMensagem);
 
-    // Cleanup: remove APENAS os listeners, não desconecta o socket
-    // porque o socket está fora do componente e pode ser reutilizado
     return () => {
       socket.off("connect", aoConectar);
       socket.off("nova_mensagem", aoReceberMensagem);
@@ -141,7 +132,6 @@ function Chat() {
   // ─── Lógica de filtro para as conversas ──────────────────────────
 const conexoesFiltradas = conexoes.filter((conexao) => {
   const termo = termoBuscaConversa.toLowerCase();
-  // Filtra pelo nome, sobrenome ou idioma nativo/aprendendo do contato
   return (
     conexao.nome.toLowerCase().includes(termo) ||
     conexao.sobrenome.toLowerCase().includes(termo) ||
