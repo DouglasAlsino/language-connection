@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 
-// Gera uma cor de avatar baseada no id do usuário
-// Assim cada pessoa tem sempre a mesma cor, sem precisar salvar no banco
+
 const CORES = [
   "linear-gradient(135deg,#4F46E5,#06B6D4)",
   "linear-gradient(135deg,#F59E0B,#EF4444)",
@@ -20,13 +19,10 @@ function getCorPorId(id) {
 }
 
 function Users() {
-  // Lista de usuários que vem da API
   const [usuarios, setUsuarios] = useState([]);
 
-  // Controla se ainda está carregando os dados
   const [carregando, setCarregando] = useState(true);
 
-  // Guarda mensagem de erro se a requisição falhar
   const [erro, setErro] = useState(null);
 
   const [filtros, setFiltros] = useState({
@@ -35,8 +31,6 @@ function Users() {
     idiomaNativo: "",
   });
 
-  // useEffect com [] executa uma única vez quando a página carrega
-  // É aqui que buscamos os usuários do backend
   useEffect(() => {
     const buscarUsuarios = async () => {
       try {
@@ -53,7 +47,6 @@ function Users() {
         console.error("Erro ao buscar usuários:", error);
         setErro("Não foi possível carregar os usuários.");
       } finally {
-        // Para o loading independente de sucesso ou erro
         setCarregando(false);
       }
     };
@@ -70,7 +63,6 @@ function Users() {
     setFiltros({ idiomaAprender: "", nivel: "", idiomaNativo: "" });
   };
 
-  // Filtra os usuários vindos da API com base nos filtros selecionados
   const usuariosFiltrados = usuarios.filter((u) => {
     if (
       filtros.idiomaAprender &&
@@ -90,7 +82,6 @@ function Users() {
 
   return (
     <div className="lc-users-page">
-      {/* Sidebar de filtros */}
       <aside className="lc-users-sidebar">
         <h2>Encontrar parceiros</h2>
 
@@ -153,7 +144,6 @@ function Users() {
         </span>
       </aside>
 
-      {/* Área principal */}
       <main className="lc-users-content">
         <div className="lc-users-header">
           <h1>
@@ -162,21 +152,18 @@ function Users() {
           </h1>
         </div>
 
-        {/* Estado de carregamento */}
         {carregando && (
           <div className="lc-empty-state">
             <p>Carregando usuários...</p>
           </div>
         )}
 
-        {/* Estado de erro */}
         {erro && (
           <div className="lc-empty-state">
             <p>{erro}</p>
           </div>
         )}
 
-        {/* Grid de cards */}
         {!carregando && !erro && (
           <div className="lc-users-grid">
             {usuariosFiltrados.map((usuario) => (
@@ -185,7 +172,6 @@ function Users() {
           </div>
         )}
 
-        {/* Nenhum resultado */}
         {!carregando && !erro && usuariosFiltrados.length === 0 && (
           <div className="lc-empty-state">
             <p>Nenhum usuário encontrado com esses filtros.</p>
@@ -199,7 +185,7 @@ function Users() {
 
 function UserCard({ usuario }) {
   const navigate = useNavigate();
-  const [statusConexao, setStatusConexao] = useState("nenhuma"); // "nenhuma" | "pendente" | "aceita"
+  const [statusConexao, setStatusConexao] = useState("nenhuma");
   const [enviando, setEnviando] = useState(false);
 
   const token = localStorage.getItem("token");
@@ -210,7 +196,6 @@ function UserCard({ usuario }) {
     ? usuario.idiomas_aprender.split(",").map((i) => i.trim())
     : [];
 
-  // Busca o status real da conexão ao montar o card
  useEffect(() => {
   const verificarStatus = async () => {
     try {
@@ -224,13 +209,10 @@ function UserCard({ usuario }) {
     }
   };
 
-  // Roda imediatamente ao montar
   verificarStatus();
 
-  // Continua verificando a cada 10 segundos
   const intervalo = setInterval(verificarStatus, 100);
 
-  // Limpa o intervalo quando o card é desmontado
   return () => clearInterval(intervalo);
 }, [usuario.id]);
 
@@ -250,7 +232,6 @@ function UserCard({ usuario }) {
     }
   };
 
-  // Decide o que mostrar no botão de conexão
   const renderBotaoConexao = () => {
     if (statusConexao === "aceita") {
       return (
