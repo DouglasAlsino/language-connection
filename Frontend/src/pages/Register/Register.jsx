@@ -2,13 +2,11 @@ import "./Register.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-// Importa a instância configurada do axios
 import api from "../../Services/api";
 
 function Cadastro() {
   const navigate = useNavigate();
 
-  // Estado do formulário
   const [form, setForm] = useState({
     nome: "",
     sobrenome: "",
@@ -18,23 +16,18 @@ function Cadastro() {
     nivel: "",
   });
 
-  // Idioma nativo selecionado — só um por vez
   const [idiomaNativo, setIdiomaNativo] = useState("Português");
 
-  // Idiomas para aprender — múltipla seleção
   const [idiomasAprender, setIdiomasAprender] = useState([]);
 
-  // Estados de controle de UI
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Lista de idiomas disponíveis nos chips
   const idiomasDisponiveis = [
     "Português", "Inglês", "Espanhol",
     "Francês", "Alemão", "Japonês",
   ];
 
-  // Atualiza os campos do formulário
   const handleChange = (e) => {
     setErro("");
     setForm((prev) => ({
@@ -43,7 +36,6 @@ function Cadastro() {
     }));
   };
 
-  // Alterna idiomas para aprender (múltipla seleção)
   const toggleIdiomaAprender = (idioma) => {
     setIdiomasAprender((prev) =>
       prev.includes(idioma)
@@ -52,12 +44,10 @@ function Cadastro() {
     );
   };
 
-  // Função chamada ao submeter o formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro("");
 
-    // Validações no frontend antes de chamar a API
     if (form.senha !== form.confirmarSenha) {
       setErro("As senhas não coincidem.");
       return;
@@ -81,31 +71,24 @@ function Cadastro() {
     setCarregando(true);
 
     try {
-      // Faz a requisição POST para o backend
-      // Envia todos os dados do formulário
       const resposta = await api.post("/auth/cadastro", {
         nome: form.nome,
         sobrenome: form.sobrenome,
         email: form.email,
         senha: form.senha,
         idioma_nativo: idiomaNativo,
-        idiomas_aprender: idiomasAprender, // array ex: ["Inglês", "Espanhol"]
+        idiomas_aprender: idiomasAprender,
         nivel: form.nivel,
       });
 
-      // Cadastro bem-sucedido
-      // O backend já retorna o token, então o usuário
-      // já fica logado automaticamente após o cadastro
+
       const { token, usuario } = resposta.data;
 
-      // Salva o token e dados do usuário no localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
 
-      // Redireciona direto para a tela principal
       navigate("/Users");
     } catch (error) {
-      // Exibe a mensagem de erro retornada pelo backend
       if (error.response && error.response.data && error.response.data.erro) {
         setErro(error.response.data.erro);
       } else {
@@ -119,7 +102,6 @@ function Cadastro() {
   return (
     <div className="lc-register-page">
 
-      {/* Header próprio do Cadastro */}
       <header className="lc-register-header">
         <img src="IMG/logo.png" alt="Logo" width="70" height="70"></img>
         <div className="lc-register-logo">
@@ -133,7 +115,6 @@ function Cadastro() {
       <main className="lc-register-wrapper">
         <div className="lc-register-container">
 
-          {/* Banner esquerdo */}
           <section className="lc-register-banner">
             <div className="lc-banner-icon">✨</div>
             <h1 className="lc-banner-title">
@@ -164,7 +145,6 @@ function Cadastro() {
             </div>
           </section>
 
-          {/* Formulário de cadastro */}
           <section className="lc-register-form-area">
             <h2 className="lc-form-title">Criar conta gratuita</h2>
             <p className="lc-form-sub">
@@ -241,7 +221,6 @@ function Cadastro() {
 
               </div>
 
-              {/* Chips de idioma nativo */}
               <div className="lc-section-label">Meu idioma nativo</div>
               <div className="lc-chips">
                 {idiomasDisponiveis.map((idioma) => (
@@ -257,7 +236,6 @@ function Cadastro() {
                 ))}
               </div>
 
-              {/* Chips de idiomas para aprender */}
               <div className="lc-section-label">Quero aprender</div>
               <div className="lc-chips">
                 {idiomasDisponiveis.map((idioma) => (
@@ -273,7 +251,6 @@ function Cadastro() {
                 ))}
               </div>
 
-              {/* Select de nível */}
               <div className="lc-section-label">Meu nível no idioma alvo</div>
               <select
                 className="lc-form-input"
@@ -290,7 +267,6 @@ function Cadastro() {
                 <option value="C2">Fluente (C2)</option>
               </select>
 
-              {/* Mensagem de erro */}
               {erro && (
                 <div className="lc-form-erro">
                   {erro}
